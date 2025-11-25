@@ -79,6 +79,9 @@
         .filter-bar {
             margin-top: 10px;
         }
+        .filter-bar .btn-group + .btn-group {
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -115,7 +118,8 @@
 
             <div class="input-group input-group-sm mb-2">
                 <input id="apiKeyInput" type="password" class="form-control" placeholder="본인 YouTube API 키 입력">
-                <button id="saveApiKeyBtn" class="btn btn-outline-primary">저장</button>
+                <button id="saveApiKeyBtn" class="btn btn-outline-primary">저장/변경</button>
+                <button id="clearApiKeyBtn" class="btn btn-outline-danger">해제</button>
             </div>
             <small id="apiKeyStatus" class="text-muted d-block">
                 이 브라우저(PC/브라우저)에만 저장됩니다.
@@ -134,12 +138,17 @@
         <button class="btn btn-outline-secondary category-button" data-category="News">📰 뉴스/정치</button>
     </div>
 
-    <!-- 길이 필터 -->
+    <!-- 길이 + 정렬 필터 -->
     <div class="text-center filter-bar">
         <div class="btn-group btn-group-sm" role="group" aria-label="Duration filter">
             <button class="btn btn-outline-dark duration-button active" data-duration="all">전체 길이</button>
             <button class="btn btn-outline-dark duration-button" data-duration="short">1분 이하</button>
             <button class="btn btn-outline-dark duration-button" data-duration="long">1분 이상</button>
+        </div>
+
+        <div class="btn-group btn-group-sm" role="group" aria-label="View sort">
+            <button class="btn btn-outline-secondary sort-button active" data-sort="viewsDesc">조회수 높은 순</button>
+            <button class="btn btn-outline-secondary sort-button" data-sort="viewsAsc">조회수 낮은 순</button>
         </div>
     </div>
 </div>
@@ -177,6 +186,7 @@
     let currentChannelStatsMap = {};
     let currentSearchKeyword = '';   // API 검색에 사용된 키워드 (없으면 트렌드 모드)
     let currentDurationFilter = 'all';   // all | short | long
+    let currentSortMode = 'viewsDesc';   // viewsDesc | viewsAsc
 
     // 숫자 포맷 (K, M, B)
     function formatNumber(num) {
@@ -260,7 +270,17 @@
 
         localStorage.setItem('ytTrendApiKey', newKey);
         loadApiKey();
-        alert('API 키가 저장되었습니다. 이 브라우저에서만 사용됩니다.');
+        alert('API 키가 저장/변경되었습니다. 이 브라우저에서만 사용됩니다.');
+    }
+
+    // API 키 해제
+    function clearApiKey() {
+        localStorage.removeItem('ytTrendApiKey');
+        API_KEY = null;
+        loadApiKey();
+        document.getElementById('video-list').innerHTML = '';
+        document.getElementById('api-status').textContent = 'API 키가 해제되었습니다. 다시 사용하려면 API 키를 등록해 주세요.';
+        alert('API 키가 해제되었습니다.');
     }
 
     // 특정 카테고리의 mostPopular 리스트 가져오기
@@ -347,7 +367,7 @@
             });
             let combinedItems = Array.from(uniqueMap.values());
 
-            // 조회수 기준 내림차순 정렬
+            // 조회수 기준 내림차순 정렬 (기본)
             combinedItems.sort((a, b) => {
                 const va = parseInt(a.statistics?.viewCount || '0', 10);
                 const vb = parseInt(b.statistics?.viewCount || '0', 10);
@@ -475,14 +495,14 @@
 
             let videoItems = videosData.items || [];
 
-            // 조회수 기준 정렬
+            // 조회수 기준 정렬 (기본 내림차순)
             videoItems.sort((a, b) => {
                 const va = parseInt(a.statistics?.viewCount || '0', 10);
                 const vb = parseInt(b.statistics?.viewCount || '0', 10);
                 return vb - va;
             });
 
-            // 48시간 필터 (검색 1차가 48시간 내였으면 이미 제한되어 있을 확률 높음)
+            // 48시간 필터
             const hours48Ago2 = new Date(now.getTime() - 48 * 60 * 60 * 1000);
             let within48 = videoItems.filter(v => {
                 const publishedAt = v.snippet.publishedAt;
@@ -549,10 +569,11 @@
         }
     }
 
-    // 길이 필터만 적용한 리스트
+    // 길이 + 정렬 필터 적용한 리스트
     function getFilteredVideos() {
         let list = currentBaseVideos.slice();
 
+        // 길이 필터
         if (currentDurationFilter !== 'all') {
             list = list.filter(v => {
                 const seconds = parseDurationSeconds(v.contentDetails?.duration || '');
@@ -561,6 +582,17 @@
                 return true;
             });
         }
+
+        // 조회수 정렬
+        list.sort((a, b) => {
+            const va = parseInt(a.statistics?.viewCount || '0', 10);
+            const vb = parseInt(b.statistics?.viewCount || '0', 10);
+            if (currentSortMode === 'viewsAsc') {
+                return va - vb; // 오름차순
+            } else {
+                return vb - va; // 내림차순
+            }
+        });
 
         return list;
     }
@@ -645,7 +677,7 @@
         });
     });
 
-    // 언어 체크박스 → 재로드
+    // 언어 체크박스 → 재로드 (중복 선택 고려 없이 마지막 true 우선)
     ['langKR', 'langEN', 'langJP'].forEach(id => {
         document.getElementById(id).addEventListener('change', () => {
             const categoryId = CATEGORIES[currentCategory];
@@ -664,6 +696,16 @@
             document.querySelector('.duration-button.active')?.classList.remove('active');
             this.classList.add('active');
             currentDurationFilter = this.getAttribute('data-duration');
+            updateVideoListAndStatus();
+        });
+    });
+
+    // 정렬 버튼
+    document.querySelectorAll('.sort-button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelector('.sort-button.active')?.classList.remove('active');
+            this.classList.add('active');
+            currentSortMode = this.getAttribute('data-sort'); // viewsDesc | viewsAsc
             updateVideoListAndStatus();
         });
     });
@@ -694,9 +736,9 @@
         loadApiKey();
 
         const saveBtn = document.getElementById('saveApiKeyBtn');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', saveApiKey);
-        }
+        const clearBtn = document.getElementById('clearApiKeyBtn');
+        if (saveBtn) saveBtn.addEventListener('click', saveApiKey);
+        if (clearBtn) clearBtn.addEventListener('click', clearApiKey);
 
         fetchPopularVideos(CATEGORIES[currentCategory]);
     });
@@ -704,4 +746,3 @@
 
 </body>
 </html>
-
