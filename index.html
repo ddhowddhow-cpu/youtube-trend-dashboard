@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
-        body {a
+        body {
             font-family: 'Noto Sans KR', sans-serif;
             background-color: #f8f9fa;
             color: #212529;
@@ -110,8 +110,15 @@
             </div>
         </div>
         <div class="col-md-3 text-center">
-            <p>API 연동 상태: <span id="api-conn-badge" class="badge bg-secondary">확인 중...</span></p>
-            <p class="text-muted">API 키: <span class="badge bg-light text-dark">브라우저 직통 호출 (테스트용)</span></p>
+            <p>API 연동 상태: <span id="api-conn-badge" class="badge bg-secondary">API 키 미등록</span></p>
+
+            <div class="input-group input-group-sm mb-2">
+                <input id="apiKeyInput" type="password" class="form-control" placeholder="본인 YouTube API 키 입력">
+                <button id="saveApiKeyBtn" class="btn btn-outline-primary">저장</button>
+            </div>
+            <small id="apiKeyStatus" class="text-muted d-block">
+                이 브라우저(PC/브라우저)에만 저장됩니다.
+            </small>
         </div>
     </div>
     <hr>
@@ -138,7 +145,8 @@
 
 <script>
     // === YouTube Data API 설정 ===
-    const API_KEY = 'AIzaSyDMYkSsjZzXOV0-OoCLclUAVT8VS93NlUQ'; // 👉 여기 본인 API 키로 교체
+    // 하드코딩된 키 대신, 브라우저 localStorage에서 사용자별 API 키를 사용
+    let API_KEY = null;
     const BASE_URL = 'https://www.googleapis.com/youtube/v3/';
 
     // 카테고리 매핑
@@ -154,8 +162,8 @@
     };
 
     let currentCategory = 'All';
-    let currentVideosRaw = [];    // API에서 받은 원본
-    let currentVideosFiltered = []; // 48시간 + 검색 필터 후 결과
+    let currentVideosRaw = [];       // API에서 받은 원본
+    let currentVideosFiltered = [];  // 48시간 + 검색 필터 후 결과
 
     // 숫자 포맷 (K, M, B)
     function formatNumber(num) {
@@ -194,8 +202,44 @@
         if (en) return { regionCode: 'US', relevanceLanguage: 'en' };
         if (jp) return { regionCode: 'JP', relevanceLanguage: 'ja' };
 
-        // 아무것도 안 고르면 그냥 기본 KR
+        // 아무것도 안 고르면 기본 KR
         return { regionCode: 'KR', relevanceLanguage: 'ko' };
+    }
+
+    // localStorage에서 API 키 불러오기
+    function loadApiKey() {
+        const savedKey = localStorage.getItem('ytTrendApiKey');
+        const apiConnBadge = document.getElementById('api-conn-badge');
+        const apiKeyStatus = document.getElementById('apiKeyStatus');
+        const apiKeyInput = document.getElementById('apiKeyInput');
+
+        if (savedKey) {
+            API_KEY = savedKey;
+            apiConnBadge.className = 'badge bg-success';
+            apiConnBadge.textContent = 'API 키 등록됨';
+            apiKeyStatus.textContent = '이 브라우저에 저장된 본인 API 키를 사용 중입니다.';
+            if (apiKeyInput) apiKeyInput.value = ''; // 화면에서는 키를 다시 안 보여줌
+        } else {
+            API_KEY = null;
+            apiConnBadge.className = 'badge bg-secondary';
+            apiConnBadge.textContent = 'API 키 미등록';
+            apiKeyStatus.textContent = '상단 입력창에 본인 API 키를 저장해 주세요.';
+        }
+    }
+
+    // API 키 저장
+    function saveApiKey() {
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const newKey = apiKeyInput.value.trim();
+
+        if (!newKey) {
+            alert('API 키를 입력해 주세요.');
+            return;
+        }
+
+        localStorage.setItem('ytTrendApiKey', newKey);
+        loadApiKey();
+        alert('API 키가 저장되었습니다. 이 브라우저에서만 사용됩니다.');
     }
 
     // 인기 동영상 가져오기 (mostPopular)
@@ -203,6 +247,15 @@
         const videoListDiv = document.getElementById('video-list');
         const apiStatusP = document.getElementById('api-status');
         const apiConnBadge = document.getElementById('api-conn-badge');
+
+        // 🔐 API 키 없는 경우: 호출 막기
+        if (!API_KEY) {
+            videoListDiv.innerHTML = '';
+            apiStatusP.textContent = '먼저 상단에서 본인 YouTube API 키를 등록해 주세요.';
+            apiConnBadge.className = 'badge bg-secondary';
+            apiConnBadge.textContent = 'API 키 미등록';
+            return;
+        }
 
         videoListDiv.innerHTML = '';
         apiStatusP.textContent = '데이터를 불러오는 중입니다...';
@@ -255,7 +308,7 @@
         } catch (error) {
             console.error('API 호출 중 오류 발생:', error);
             apiStatusP.innerHTML =
-                `⚠️ API 호출에 실패했습니다.<br>API 키($API_KEY$를 본인의 키로 교체했는지)와 쿼터, 네트워크 연결을 확인하세요.`;
+                '⚠️ API 호출에 실패했습니다.<br>API 키가 올바른지, 사용 설정/쿼터/리퍼러(도메인) 제한을 확인해 주세요.';
             apiConnBadge.className = 'badge bg-danger';
             apiConnBadge.textContent = '오류';
         }
@@ -393,8 +446,18 @@
         }
     });
 
-    // 페이지 로드 시 첫 호출
+    // 페이지 로드 시 첫 설정
     document.addEventListener('DOMContentLoaded', () => {
+        // 1) localStorage에서 API 키 로드
+        loadApiKey();
+
+        // 2) API 키 저장 버튼 이벤트
+        const saveBtn = document.getElementById('saveApiKeyBtn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', saveApiKey);
+        }
+
+        // 3) 첫 카테고리 호출 (API 키 있으면 호출, 없으면 안내)
         fetchPopularVideos(CATEGORIES[currentCategory]);
     });
 </script>
