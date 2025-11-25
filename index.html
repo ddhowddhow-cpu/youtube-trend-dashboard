@@ -86,7 +86,7 @@
 <div class="container-fluid header">
     <div class="row align-items-center">
         <div class="col-md-3 text-center">
-            <h3>트렌드 분석기 제작 자돈 </h3>
+            <h3>Ultimate YouTube Trend Dashboard</h3>
             <p class="text-muted">최근 48시간 기준 인기 영상 분석</p>
         </div>
         <div class="col-md-6">
@@ -134,7 +134,7 @@
         <button class="btn btn-outline-secondary category-button" data-category="News">📰 뉴스/정치</button>
     </div>
 
-    <!-- 길이 필터만 사용 -->
+    <!-- 길이 필터 -->
     <div class="text-center filter-bar">
         <div class="btn-group btn-group-sm" role="group" aria-label="Duration filter">
             <button class="btn btn-outline-dark duration-button active" data-duration="all">전체 길이</button>
@@ -154,10 +154,10 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // === YouTube Data API 설정 ===
     let API_KEY = null;
     const BASE_URL = 'https://www.googleapis.com/youtube/v3/';
 
+    // 카테고리 ID 매핑
     const CATEGORIES = {
         'All': '',
         'Music': '10',
@@ -169,8 +169,11 @@
         'News': '25'
     };
 
+    // "전체" 탭에서 합칠 카테고리 목록
+    const ALL_CATEGORY_IDS = ['10','24','17','22','27','28','25'];
+
     let currentCategory = 'All';
-    let currentBaseVideos = [];      // 48시간 필터 적용된 원본 리스트
+    let currentBaseVideos = [];      // 48시간 필터까지 적용된 기본 리스트
     let currentChannelStatsMap = {};
     let currentSearchKeyword = '';
     let currentDurationFilter = 'all';   // all | short | long
@@ -260,7 +263,29 @@
         alert('API 키가 저장되었습니다. 이 브라우저에서만 사용됩니다.');
     }
 
-    // 인기 동영상 가져오기
+    // 특정 카테고리의 mostPopular 리스트 가져오기
+    async function fetchMostPopularForCategory(regionCode, categoryId) {
+        let url = `${BASE_URL}videos?part=snippet,contentDetails,statistics&chart=mostPopular&regionCode=${regionCode}&maxResults=50&key=${API_KEY}`;
+        if (categoryId) {
+            url += `&videoCategoryId=${categoryId}`;
+        }
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.error) {
+                console.error('YouTube API category error:', categoryId, data.error);
+                return [];
+            }
+            return data.items || [];
+        } catch (e) {
+            console.error('fetchMostPopularForCategory fetch error:', categoryId, e);
+            return [];
+        }
+    }
+
+    // 인기 동영상 가져오기 (전체/개별 카테고리)
     async function fetchPopularVideos(categoryId) {
         const videoListDiv = document.getElementById('video-list');
         const apiStatusP = document.getElementById('api-status');
@@ -281,29 +306,64 @@
 
         const { regionCode } = getRegionAndLanguage();
 
-        let url = `${BASE_URL}videos?part=snippet,contentDetails,statistics&chart=mostPopular&regionCode=${regionCode}&maxResults=50&key=${API_KEY}`;
-        if (categoryId) {
-            url += `&videoCategoryId=${categoryId}`;
-        }
-
         try {
-            const response = await fetch(url);
-            const data = await response.json();
+            let allItems = [];
 
-            if (!data.items) {
-                throw new Error(JSON.stringify(data));
+            if (!categoryId) {
+                // 전체 탭: 여러 카테고리의 인기 영상을 모두 합침
+                const promises = ALL_CATEGORY_IDS.map(id =>
+                    fetchMostPopularForCategory(regionCode, id)
+                );
+                const results = await Promise.all(promises);
+                results.forEach(arr => {
+                    if (Array.isArray(arr)) allItems = allItems.concat(arr);
+                });
+            } else {
+                // 개별 카테고리 탭
+                const arr = await fetchMostPopularForCategory(regionCode, categoryId);
+                allItems = allItems.concat(arr);
             }
+
+            if (allItems.length === 0) {
+                // 진짜로 받아온 영상이 하나도 없을 때: API키 에러 대신 "데이터 없음"만 표시
+                currentBaseVideos = [];
+                currentChannelStatsMap = {};
+                renderVideoList([], {});
+                apiStatusP.textContent = '표시할 영상이 없습니다. (이 카테고리/지역에서 인기 영상이 없거나 API 쿼터 제한일 수 있습니다)';
+                document.getElementById('time-info').textContent =
+                    '기준: 최근 48시간 이내 업로드된 인기 영상이 없을 수 있습니다.';
+                apiConnBadge.className = 'badge bg-warning text-dark';
+                apiConnBadge.textContent = '데이터 없음';
+                return;
+            }
+
+            // 중복 제거 (video.id 기준)
+            const uniqueMap = new Map();
+            allItems.forEach(v => {
+                const vid = v.id;
+                if (!uniqueMap.has(vid)) {
+                    uniqueMap.set(vid, v);
+                }
+            });
+            let combinedItems = Array.from(uniqueMap.values());
+
+            // 조회수 기준 내림차순 정렬
+            combinedItems.sort((a, b) => {
+                const va = parseInt(a.statistics?.viewCount || '0', 10);
+                const vb = parseInt(b.statistics?.viewCount || '0', 10);
+                return vb - va;
+            });
 
             // 48시간 필터
             const now = new Date();
             const hours48Ago = new Date(now.getTime() - 48 * 60 * 60 * 1000);
-            let within48 = data.items.filter(v => {
+            let within48 = combinedItems.filter(v => {
                 const publishedAt = v.snippet.publishedAt;
                 return new Date(publishedAt) >= hours48Ago;
             });
 
             if (within48.length === 0) {
-                within48 = data.items;
+                within48 = combinedItems;
                 document.getElementById('time-info').textContent =
                     '⚠️ 이 카테고리/지역에서는 최근 48시간 업로드 영상이 적어 전체 인기 영상 목록을 표시합니다.';
             } else {
