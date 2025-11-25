@@ -91,7 +91,7 @@
         </div>
         <div class="col-md-6">
             <div class="input-group">
-                <input id="searchInput" type="text" class="form-control" placeholder="제목/채널 키워드 검색">
+                <input id="searchInput" type="text" class="form-control" placeholder="제목/채널/키워드 검색 (예: 폭싹)">
                 <button id="searchBtn" class="btn btn-primary">검색</button>
             </div>
             <div class="mt-2">
@@ -175,7 +175,7 @@
     let currentCategory = 'All';
     let currentBaseVideos = [];      // 48시간 필터까지 적용된 기본 리스트
     let currentChannelStatsMap = {};
-    let currentSearchKeyword = '';
+    let currentSearchKeyword = '';   // API 검색에 사용된 키워드 (없으면 트렌드 모드)
     let currentDurationFilter = 'all';   // all | short | long
 
     // 숫자 포맷 (K, M, B)
@@ -285,7 +285,7 @@
         }
     }
 
-    // 인기 동영상 가져오기 (전체/개별 카테고리)
+    // 인기 동영상 (트렌드 모드)
     async function fetchPopularVideos(categoryId) {
         const videoListDiv = document.getElementById('video-list');
         const apiStatusP = document.getElementById('api-status');
@@ -325,7 +325,6 @@
             }
 
             if (allItems.length === 0) {
-                // 진짜로 받아온 영상이 하나도 없을 때: API키 에러 대신 "데이터 없음"만 표시
                 currentBaseVideos = [];
                 currentChannelStatsMap = {};
                 renderVideoList([], {});
@@ -334,6 +333,7 @@
                     '기준: 최근 48시간 이내 업로드된 인기 영상이 없을 수 있습니다.';
                 apiConnBadge.className = 'badge bg-warning text-dark';
                 apiConnBadge.textContent = '데이터 없음';
+                currentSearchKeyword = '';
                 return;
             }
 
@@ -372,8 +372,7 @@
             }
 
             currentBaseVideos = within48;
-            currentSearchKeyword = '';
-
+            currentSearchKeyword = ''; // 트렌드 모드
             const channelStatsMap = await fetchChannelStats(within48);
             currentChannelStatsMap = channelStatsMap;
 
@@ -386,6 +385,134 @@
                 '⚠️ API 호출에 실패했습니다.<br>API 키가 올바른지, 사용 설정/쿼터/리퍼러(도메인) 제한을 확인해 주세요.';
             apiConnBadge.className = 'badge bg-danger';
             apiConnBadge.textContent = '오류';
+        }
+    }
+
+    // 키워드 검색 (폭싹 등) – Search API + Videos API
+    async function searchVideosByKeyword(keyword) {
+        const videoListDiv = document.getElementById('video-list');
+        const apiStatusP = document.getElementById('api-status');
+        const apiConnBadge = document.getElementById('api-conn-badge');
+
+        if (!API_KEY) {
+            videoListDiv.innerHTML = '';
+            apiStatusP.textContent = '먼저 상단에서 본인 YouTube API 키를 등록해 주세요.';
+            apiConnBadge.className = 'badge bg-secondary';
+            apiConnBadge.textContent = 'API 키 미등록';
+            return;
+        }
+
+        videoListDiv.innerHTML = '';
+        apiStatusP.textContent = `"${keyword}" 검색 중...`;
+        apiConnBadge.className = 'badge bg-warning text-dark';
+        apiConnBadge.textContent = '검색 중...';
+
+        const { regionCode } = getRegionAndLanguage();
+
+        try {
+            const now = new Date();
+            const hours48Ago = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+            const publishedAfter = hours48Ago.toISOString();
+
+            const categoryId = CATEGORIES[currentCategory] || '';
+            let searchBase =
+                `${BASE_URL}search?part=snippet&type=video&maxResults=50&order=viewCount` +
+                `&regionCode=${regionCode}&q=${encodeURIComponent(keyword)}&key=${API_KEY}`;
+            if (categoryId) {
+                searchBase += `&videoCategoryId=${categoryId}`;
+            }
+
+            // 1차: 최근 48시간 이내
+            let searchUrl = `${searchBase}&publishedAfter=${publishedAfter}`;
+            let response = await fetch(searchUrl);
+            let searchData = await response.json();
+
+            if (searchData.error) {
+                console.error('search API error:', searchData.error);
+                throw new Error('search API error');
+            }
+
+            let items = searchData.items || [];
+
+            // 48시간 내 결과가 없으면 기간 제한 없이 다시 시도
+            if (items.length === 0) {
+                searchUrl = searchBase;
+                response = await fetch(searchUrl);
+                searchData = await response.json();
+                if (searchData.error) {
+                    console.error('search API error (no date):', searchData.error);
+                    throw new Error('search API error');
+                }
+                items = searchData.items || [];
+            }
+
+            if (items.length === 0) {
+                currentBaseVideos = [];
+                currentChannelStatsMap = {};
+                renderVideoList([], {});
+                apiStatusP.textContent = `"${keyword}" 검색 결과가 없습니다.`;
+                document.getElementById('time-info').textContent =
+                    '검색 결과 없음.';
+                apiConnBadge.className = 'badge bg-warning text-dark';
+                apiConnBadge.textContent = '검색 0개';
+                currentSearchKeyword = keyword;
+                return;
+            }
+
+            const videoIds = items
+                .map(it => it.id && it.id.videoId)
+                .filter(Boolean);
+
+            const videosUrl =
+                `${BASE_URL}videos?part=snippet,contentDetails,statistics&id=${videoIds.join(',')}&key=${API_KEY}`;
+            const videosResp = await fetch(videosUrl);
+            const videosData = await videosResp.json();
+
+            if (videosData.error) {
+                console.error('videos API error for search:', videosData.error);
+                throw new Error('videos API error');
+            }
+
+            let videoItems = videosData.items || [];
+
+            // 조회수 기준 정렬
+            videoItems.sort((a, b) => {
+                const va = parseInt(a.statistics?.viewCount || '0', 10);
+                const vb = parseInt(b.statistics?.viewCount || '0', 10);
+                return vb - va;
+            });
+
+            // 48시간 필터 (검색 1차가 48시간 내였으면 이미 제한되어 있을 확률 높음)
+            const hours48Ago2 = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+            let within48 = videoItems.filter(v => {
+                const publishedAt = v.snippet.publishedAt;
+                return new Date(publishedAt) >= hours48Ago2;
+            });
+
+            if (within48.length === 0) {
+                within48 = videoItems;
+                document.getElementById('time-info').textContent =
+                    '⚠️ 이 키워드에 대해 최근 48시간 내 업로드된 영상이 적어 전체 검색 결과를 표시합니다.';
+            } else {
+                document.getElementById('time-info').textContent =
+                    '기준: 이 키워드에 대해 최근 48시간 이내 업로드된 인기 영상만 표시 중입니다.';
+            }
+
+            currentBaseVideos = within48;
+            currentSearchKeyword = keyword;
+
+            const channelStatsMap = await fetchChannelStats(within48);
+            currentChannelStatsMap = channelStatsMap;
+
+            updateVideoListAndStatus();
+            apiConnBadge.className = 'badge bg-success';
+            apiConnBadge.textContent = '검색 완료';
+        } catch (error) {
+            console.error('검색 API 호출 중 오류 발생:', error);
+            apiStatusP.innerHTML =
+                '⚠️ 검색 API 호출에 실패했습니다.<br>API 키/쿼터/리퍼러(도메인) 제한을 확인해 주세요.';
+            apiConnBadge.className = 'badge bg-danger';
+            apiConnBadge.textContent = '검색 오류';
         }
     }
 
@@ -422,21 +549,10 @@
         }
     }
 
-    // 필터(검색 + 길이)를 전부 적용한 리스트
+    // 길이 필터만 적용한 리스트
     function getFilteredVideos() {
         let list = currentBaseVideos.slice();
 
-        // 검색어
-        if (currentSearchKeyword) {
-            const kw = currentSearchKeyword.toLowerCase();
-            list = list.filter(v => {
-                const title = v.snippet.title.toLowerCase();
-                const channel = v.snippet.channelTitle.toLowerCase();
-                return title.includes(kw) || channel.includes(kw);
-            });
-        }
-
-        // 길이 필터
         if (currentDurationFilter !== 'all') {
             list = list.filter(v => {
                 const seconds = parseDurationSeconds(v.contentDetails?.duration || '');
@@ -456,7 +572,7 @@
 
         if (!apiStatusP) return;
         if (currentSearchKeyword) {
-            apiStatusP.textContent = `검색 결과: ${list.length}개 (키워드: "${currentSearchKeyword}")`;
+            apiStatusP.textContent = `"${currentSearchKeyword}" 검색 결과: ${list.length}개`;
         } else {
             apiStatusP.textContent = `총 ${list.length}개의 영상을 표시합니다.`;
         }
@@ -521,6 +637,10 @@
             const categoryId = CATEGORIES[currentCategory];
 
             document.getElementById('category-title').textContent = this.textContent.trim();
+            // 카테고리 바꾸면 검색모드 해제하고 트렌드 모드로
+            const input = document.getElementById('searchInput');
+            input.value = '';
+            currentSearchKeyword = '';
             fetchPopularVideos(categoryId);
         });
     });
@@ -529,7 +649,12 @@
     ['langKR', 'langEN', 'langJP'].forEach(id => {
         document.getElementById(id).addEventListener('change', () => {
             const categoryId = CATEGORIES[currentCategory];
-            fetchPopularVideos(categoryId);
+            const keyword = document.getElementById('searchInput').value.trim();
+            if (keyword) {
+                searchVideosByKeyword(keyword);
+            } else {
+                fetchPopularVideos(categoryId);
+            }
         });
     });
 
@@ -543,11 +668,18 @@
         });
     });
 
-    // 검색
+    // 검색 버튼 클릭
     document.getElementById('searchBtn').addEventListener('click', () => {
         const keyword = document.getElementById('searchInput').value.trim();
-        currentSearchKeyword = keyword;
-        updateVideoListAndStatus();
+        const categoryId = CATEGORIES[currentCategory];
+
+        if (!keyword) {
+            // 검색어 없으면 현재 카테고리 트렌드로 복귀
+            currentSearchKeyword = '';
+            fetchPopularVideos(categoryId);
+        } else {
+            searchVideosByKeyword(keyword);
+        }
     });
 
     // Enter로 검색
