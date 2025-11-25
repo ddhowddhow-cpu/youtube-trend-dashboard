@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate YouTube Trend Dashboard</title>
+    <title>유투브 트렌드 검색 [제작:자돈]</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
 
@@ -51,9 +51,9 @@
             -webkit-box-orient: vertical;
         }
         .stats-badge {
-            font-size: 0.7rem;          /* 폰트 줄임 */
+            font-size: 0.7rem;
             font-weight: 700;
-            padding: 3px 6px;           /* 패딩 줄임 */
+            padding: 3px 6px;
             margin-right: 3px;
             border-radius: 5px;
             display: inline-block;
@@ -159,7 +159,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // === YouTube Data API 설정 ===
     let API_KEY = null;
     const BASE_URL = 'https://www.googleapis.com/youtube/v3/';
 
@@ -175,7 +174,7 @@
     };
 
     let currentCategory = 'All';
-    let currentBaseVideos = [];      // 48시간 필터 적용된 원본
+    let currentBaseVideos = [];      // 48시간 필터까지 적용된 기본 리스트
     let currentChannelStatsMap = {};
     let currentSearchKeyword = '';
     let currentAspectFilter = 'all';     // all | landscape | portrait
@@ -218,12 +217,17 @@
         return hours * 3600 + minutes * 60 + seconds;
     }
 
-    // 가로(16:9) / 세로(9:16) 판별 (썸네일 비율 사용)
+    // 가로/세로 판별: 썸네일 기준
     function isLandscapeVideo(video) {
         const thumbs = video.snippet.thumbnails || {};
         const t = thumbs.maxres || thumbs.standard || thumbs.high || thumbs.medium || thumbs.default;
-        if (!t || !t.width || !t.height) return true; // 정보 없으면 가로로 취급
+        if (!t || !t.width || !t.height) return true; // 정보 없으면 일단 가로로 취급
         return t.width >= t.height;
+    }
+
+    function isShortVideo(video) {
+        const seconds = parseDurationSeconds(video.contentDetails?.duration || '');
+        return seconds > 0 && seconds <= 60;
     }
 
     // 언어/지역 설정
@@ -326,9 +330,8 @@
             }
 
             currentBaseVideos = within48;
-            currentSearchKeyword = ''; // 카테고리 바꾸면 검색 초기화
+            currentSearchKeyword = '';
 
-            // 채널 구독자 수
             const channelStatsMap = await fetchChannelStats(within48);
             currentChannelStatsMap = channelStatsMap;
 
@@ -377,11 +380,11 @@
         }
     }
 
-    // 현재 필터(검색+비율+길이)를 전부 적용한 리스트 얻기
+    // 현재 필터(검색 + 비율 + 길이)를 전부 적용한 리스트 얻기
     function getFilteredVideos() {
         let list = currentBaseVideos.slice();
 
-        // 검색어
+        // 1) 검색어
         if (currentSearchKeyword) {
             const kw = currentSearchKeyword.toLowerCase();
             list = list.filter(v => {
@@ -391,17 +394,17 @@
             });
         }
 
-        // 비율 필터
+        // 2) 비율 필터 (가로/세로)
         if (currentAspectFilter !== 'all') {
             list = list.filter(v => {
-                const isLandscape = isLandscapeVideo(v);
-                if (currentAspectFilter === 'landscape') return isLandscape;
-                if (currentAspectFilter === 'portrait') return !isLandscape;
+                const landscape = isLandscapeVideo(v);
+                if (currentAspectFilter === 'landscape') return landscape;      // 롱
+                if (currentAspectFilter === 'portrait') return !landscape;      // 숏
                 return true;
             });
         }
 
-        // 길이 필터
+        // 3) 길이 필터
         if (currentDurationFilter !== 'all') {
             list = list.filter(v => {
                 const seconds = parseDurationSeconds(v.contentDetails?.duration || '');
