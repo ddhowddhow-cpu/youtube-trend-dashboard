@@ -306,15 +306,39 @@
         'くん','公式','映像'
     ]);
 
-    function formatNumberKR(num) {
-        if (num >= 100000000) return (num / 100000000).toFixed(1).replace(/\.0$/, '') + '억';
-        if (num >= 10000000)  return (num / 10000000).toFixed(1).replace(/\.0$/, '') + '천만';
-        if (num >= 1000000)   return (num / 1000000).toFixed(1).replace(/\.0$/, '') + '백만';
-        if (num >= 100000)    return (num / 100000).toFixed(1).replace(/\.0$/, '') + '십만';
-        if (num >= 10000)     return (num / 10000).toFixed(1).replace(/\.0$/, '') + '만';
-        if (num >= 1000)      return (num / 1000).toFixed(1).replace(/\.0$/, '') + '천';
-        return num.toString();
+   // 숫자 → 한국식 단위 표기 (억 / 만 / 천)
+function formatNumberKR(num) {
+    if (num == null || isNaN(num)) return '0';
+    num = Number(num);
+
+    // 1억 이상은 "억" 단위 (필요하면 한 자리 소수점, 10억 이상이면 정수)
+    if (num >= 100000000) {
+        const eok = num / 100000000;
+        const str = (eok >= 10 ? eok.toFixed(0) : eok.toFixed(1)).replace(/\.0$/, '');
+        return str + '억';
     }
+
+    // 1만 이상은 전부 "만" 단위 (정수) → 2,700,000 → 270만 / 430,000 → 43만
+    if (num >= 10000) {
+        const man = Math.round(num / 10000);
+        return man + '만';
+    }
+
+    // 1,000 이상은 "천" 단위 (정수) → 6,300 → 6천
+    if (num >= 1000) {
+        const cheon = Math.round(num / 1000);
+        return cheon + '천';
+    }
+
+    // 그 아래는 그대로 숫자
+    return num.toString();
+}
+
+// 기존 코드 호환용
+function formatNumber(num) {
+    return formatNumberKR(num);
+}
+
     function formatNumber(num) { return formatNumberKR(num); }
 
     function timeAgo(publishedAt) {
@@ -1049,3 +1073,4 @@
 
 </body>
 </html>
+
