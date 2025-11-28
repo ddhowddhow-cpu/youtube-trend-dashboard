@@ -808,9 +808,44 @@
             )
         );
         if (channelIds.length === 0) return {};
-        const url = `${BASE_URL}channels?part=statistics&id=${channelIds.join(',')}&key=${API_KEY}`;
+        async function fetchChannelStats(videoItems) {
+    const channelIds = Array.from(
+        new Set(videoItems.map(v => v.snippet.channelId).filter(Boolean))
+    );
+
+    if (channelIds.length === 0) return {};
+
+    const CHUNK_SIZE = 50;
+    let channelStatsMap = {};
+
+    // 50개씩 분할 호출
+    for (let i = 0; i < channelIds.length; i += CHUNK_SIZE) {
+        const chunk = channelIds.slice(i, i + CHUNK_SIZE);
+
+        const url =
+            `${BASE_URL}channels?part=statistics&id=${chunk.join(',')}&key=${API_KEY}`;
+
         try {
             const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.items) {
+                data.items.forEach(ch => {
+                    const id = ch.id;
+                    const subs = ch.statistics?.subscriberCount
+                        ? parseInt(ch.statistics.subscriberCount)
+                        : 0;
+                    channelStatsMap[id] = subs;
+                });
+            }
+        } catch (e) {
+            console.error('채널 통계 호출 오류:', e);
+        }
+    }
+
+    return channelStatsMap;
+}
+
             const data = await response.json();
             if (data.error) {
                 console.error('채널 정보 호출 오류:', data.error);
@@ -1222,3 +1257,4 @@
 
 </body>
 </html>
+
