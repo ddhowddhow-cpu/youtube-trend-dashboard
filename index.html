@@ -74,6 +74,11 @@
             background-color: #ff6f61;
             color: white;
         }
+        /* 댓글 비율 색상 */
+        .badge-commentRate {
+            background-color: #4dabf7;
+            color: white;
+        }
 
         .category-button {
             border-radius: 20px;
@@ -140,7 +145,7 @@
             color: #495057;
         }
 
-        /* 인기 댓글 박스 */
+        /* (예전 인기 댓글 박스 스타일 - 지금은 사용 안함이지만 남겨둬도 무방) */
         .top-comment-box {
             background-color: #f8f9fa;
             border-radius: 4px;
@@ -203,7 +208,7 @@
         <button class="btn btn-outline-secondary category-button" data-category="Education">📚 교육/지식</button>
         <button class="btn btn-outline-secondary category-button" data-category="IT">💻 IT/테크</button>
         <button class="btn btn-outline-secondary category-button" data-category="News">📰 뉴스/정치</button>
-        <!-- ✅ 라이브 탭 추가 -->
+        <!-- ✅ 라이브 탭 -->
         <button class="btn btn-outline-secondary category-button" data-category="Live">📡 라이브</button>
     </div>
 
@@ -335,25 +340,19 @@
         if (num == null || isNaN(num)) return '0';
         num = Number(num);
 
-        // 1억 이상은 "억"
         if (num >= 100000000) {
             const eok = num / 100000000;
             const str = (eok >= 10 ? eok.toFixed(0) : eok.toFixed(1)).replace(/\.0$/, '');
             return str + '억';
         }
-
-        // 1만 이상 → "만"
         if (num >= 10000) {
             const man = Math.round(num / 10000);
             return man + '만';
         }
-
-        // 1,000 이상 → "천"
         if (num >= 1000) {
             const cheon = Math.round(num / 1000);
             return cheon + '천';
         }
-
         return num.toString();
     }
 
@@ -502,7 +501,6 @@
             let allItems = [];
 
             if (!categoryId) {
-                // 전체 탭: 카테고리별 에러는 무시하고 성공한 것만 합치기
                 const results = await Promise.allSettled(
                     ALL_CATEGORY_IDS.map(id => fetchMostPopularForCategory(regionCode, id))
                 );
@@ -917,7 +915,7 @@
         });
     }
 
-    // ✅ 인기 댓글 1개 미리보기 포함
+    // ✅ 인기댓글 → 댓글 갯수 + 댓글비율 뱃지로 표시
     function createVideoCard(video, channelStatsMap) {
         const title = video.snippet.title;
         const channelTitle = video.snippet.channelTitle;
@@ -938,6 +936,7 @@
         const viewVelocity = viewCount > 0 ? viewCount / hoursSinceUpload : 0;
 
         const likeRate = viewCount > 0 ? (likeCount / viewCount) * 100 : 0;
+        const commentRate = viewCount > 0 ? (commentCount / viewCount) * 100 : 0;
 
         const durationSeconds = parseDurationSeconds(video.contentDetails?.duration || '');
         const durationLabel = formatDurationLabel(durationSeconds);
@@ -984,17 +983,9 @@
                         <span class="stats-badge badge-likeRate">
                             좋아요율 ${likeRate.toFixed(1)}%
                         </span>
-                    </div>
-
-                    <!-- 인기 댓글 1개 미리보기 -->
-                    <div class="mt-2">
-                        <button class="btn btn-sm btn-outline-secondary btn-load-comment"
-                                data-video-id="${videoId}">
-                            💬 인기 댓글 1개 보기
-                        </button>
-                        <div class="top-comment mt-1" id="top-comment-${videoId}"
-                             style="display:none;">
-                        </div>
+                        <span class="stats-badge badge-commentRate">
+                            댓글비율 ${commentRate.toFixed(2)}%
+                        </span>
                     </div>
                 </div>
             </div>
@@ -1096,38 +1087,6 @@
         }
         const entries = buildTrendKeywordsFromVideos(currentBaseVideos);
         updateTrendKeywords(entries);
-    }
-
-    // ✅ 인기 댓글 1개 가져오기
-    async function fetchTopComment(videoId) {
-        if (!API_KEY) return { ok: false, text: 'API 키가 없습니다.' };
-
-        const url =
-            `${BASE_URL}commentThreads?part=snippet&videoId=${videoId}` +
-            `&maxResults=1&order=relevance&textFormat=plainText&key=${API_KEY}`;
-        try {
-            const resp = await fetch(url);
-            const data = await resp.json();
-            if (data.error) {
-                console.error('댓글 API 오류:', data.error);
-                return { ok: false, text: '댓글을 불러올 수 없습니다.' };
-            }
-            const items = data.items || [];
-            if (items.length === 0) {
-                return { ok: false, text: '표시할 댓글이 없습니다.' };
-            }
-            const top = items[0].snippet.topLevelComment.snippet;
-            const author = top.authorDisplayName || '작성자';
-            const text = top.textDisplay || '(내용 없음)';
-            const likeCnt = top.likeCount || 0;
-            const publishedAt = top.publishedAt ? timeAgo(top.publishedAt) : '';
-
-            const line = `📝 ${author} · 👍 ${formatNumber(likeCnt)} · ${publishedAt}\n\n${text}`;
-            return { ok: true, text: line };
-        } catch (e) {
-            console.error('댓글 API 호출 예외:', e);
-            return { ok: false, text: '댓글을 불러오는 중 오류가 발생했습니다.' };
-        }
     }
 
     // 카테고리 버튼
@@ -1238,36 +1197,6 @@
     });
     document.getElementById('searchInput').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') document.getElementById('searchBtn').click();
-    });
-
-    // ✅ 댓글 버튼 클릭(이벤트 위임)
-    document.addEventListener('click', async (e) => {
-        const btn = e.target.closest('.btn-load-comment');
-        if (!btn) return;
-
-        const videoId = btn.getAttribute('data-video-id');
-        const box = document.getElementById(`top-comment-${videoId}`);
-        if (!box) return;
-
-        // 이미 로딩된 경우: 토글만
-        if (box.dataset.loaded === 'true') {
-            const visible = box.style.display !== 'none';
-            box.style.display = visible ? 'none' : 'block';
-            btn.textContent = visible ? '💬 인기 댓글 1개 보기' : '💬 닫기';
-            return;
-        }
-
-        btn.disabled = true;
-        btn.textContent = '불러오는 중...';
-
-        const result = await fetchTopComment(videoId);
-        box.dataset.loaded = 'true';
-        box.className = 'top-comment-box top-comment mt-1';
-        box.textContent = result.text;
-        box.style.display = 'block';
-
-        btn.disabled = false;
-        btn.textContent = '💬 닫기';
     });
 
     document.addEventListener('DOMContentLoaded', () => {
