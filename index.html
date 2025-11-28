@@ -307,50 +307,52 @@
         'くん','公式','映像'
     ]);
 
-    // 숫자 포맷 (K, M, B)
-  // 숫자 → 한국식 단위 표기
-function formatNumberKR(num) {
-    if (num >= 100000000) { // 1억 이상
-        return (num / 100000000).toFixed(1).replace(/\.0$/, '') + '억';
+    // 숫자 → 한국식 단위 표기
+    function formatNumberKR(num) {
+        if (num >= 100000000) { // 1억 이상
+            return (num / 100000000).toFixed(1).replace(/\.0$/, '') + '억';
+        }
+        if (num >= 10000000) { // 천만
+            return (num / 10000000).toFixed(1).replace(/\.0$/, '') + '천만';
+        }
+        if (num >= 1000000) { // 백만
+            return (num / 1000000).toFixed(1).replace(/\.0$/, '') + '백만';
+        }
+        if (num >= 100000) { // 십만
+            return (num / 100000).toFixed(1).replace(/\.0$/, '') + '십만';
+        }
+        if (num >= 10000) { // 만
+            return (num / 10000).toFixed(1).replace(/\.0$/, '') + '만';
+        }
+        if (num >= 1000) { // 천 단위
+            return (num / 1000).toFixed(1).replace(/\.0$/, '') + '천';
+        }
+        return num.toString();
     }
-    if (num >= 10000000) { // 천만
-        return (num / 10000000).toFixed(1).replace(/\.0$/, '') + '천만';
-    }
-    if (num >= 1000000) { // 백만
-        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + '백만';
-    }
-    if (num >= 100000) { // 십만
-        return (num / 100000).toFixed(1).replace(/\.0$/, '') + '십만';
-    }
-    if (num >= 10000) { // 만
-        return (num / 10000).toFixed(1).replace(/\.0$/, '') + '만';
-    }
-    if (num >= 1000) { // 천 단위
-        return (num / 1000).toFixed(1).replace(/\.0$/, '') + '천';
-    }
-    return num.toString();
-}
 
+    // ✅ 기존 코드에서 쓰던 이름 유지용 래퍼
+    function formatNumber(num) {
+        return formatNumberKR(num);
+    }
 
     // 업로드 시간 → "몇 시간 전" (항상 시간 단위로 표시)
-function timeAgo(publishedAt) {
-    const now = new Date();
-    const published = new Date(publishedAt);
-    const diffMs = now - published;
+    function timeAgo(publishedAt) {
+        const now = new Date();
+        const published = new Date(publishedAt);
+        const diffMs = now - published;
 
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-    const diffHours   = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+        const diffHours   = Math.floor(diffMs / (1000 * 60 * 60));
 
-    if (diffMinutes < 1) {
-        return '방금 전';
+        if (diffMinutes < 1) {
+            return '방금 전';
+        }
+        if (diffHours < 1) {
+            return `${diffMinutes}분 전`;
+        }
+        // 24시간이 넘더라도 무조건 시간 단위로
+        return `${diffHours}시간 전`;
     }
-    if (diffHours < 1) {
-        return `${diffMinutes}분 전`;
-    }
-    // 24시간이 넘더라도 무조건 시간 단위로
-    return `${diffHours}시간 전`;
-}
-
 
     // ISO8601 duration → 초 단위
     function parseDurationSeconds(iso) {
@@ -1107,5 +1109,3 @@ function timeAgo(publishedAt) {
 
 </body>
 </html>
-
-
