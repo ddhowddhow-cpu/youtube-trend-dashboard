@@ -85,7 +85,6 @@
             margin-left: 8px;
         }
 
-        /* 오른쪽 트렌드 키워드 박스 */
         .trend-box {
             background-color: #ffffff;
             border-radius: 8px;
@@ -169,7 +168,7 @@
                 <button id="clearApiKeyBtn" class="btn btn-outline-danger">해제</button>
             </div>
             <small id="apiKeyStatus" class="text-muted d-block">
-                이 브라우저(PC/브라우저)에만 저장됩니다.
+                이 브라우저(PC/브라우저)에 저장된 본인 API 키를 사용 중입니다.
             </small>
         </div>
     </div>
@@ -185,7 +184,6 @@
         <button class="btn btn-outline-secondary category-button" data-category="News">📰 뉴스/정치</button>
     </div>
 
-    <!-- 길이 + 정렬 필터 -->
     <div class="text-center filter-bar">
         <div class="btn-group btn-group-sm" role="group" aria-label="Duration filter">
             <button class="btn btn-outline-dark duration-button active" data-duration="all">전체 길이</button>
@@ -202,7 +200,6 @@
         </div>
     </div>
 
-    <!-- 구독자 수 필터 -->
     <div class="text-center mt-2">
         <span class="text-muted me-2">구독자 수 필터:</span>
 
@@ -240,7 +237,6 @@
 
 <div class="container main-content">
     <div class="row">
-        <!-- 왼쪽: 영상 리스트 영역 -->
         <div class="col-lg-9 col-md-8">
             <h4 id="category-title">📌 전체 영상</h4>
             <p class="text-muted" id="api-status">API 호출 준비 중...</p>
@@ -248,7 +244,6 @@
             <div class="row" id="video-list"></div>
         </div>
 
-        <!-- 오른쪽: 트렌드 키워드 영역 -->
         <div class="col-lg-3 col-md-4">
             <div class="trend-box">
                 <h5>🔥 실시간 트렌드 키워드 TOP 30</h5>
@@ -282,15 +277,14 @@
         'IT': '28',
         'News': '25'
     };
-
     const ALL_CATEGORY_IDS = ['10','24','17','22','27','28','25'];
 
     let currentCategory = 'All';
     let currentBaseVideos = [];
     let currentChannelStatsMap = {};
     let currentSearchKeyword = '';
-    let currentDurationFilter = 'all';   // all | short | mid | long
-    let currentSortMode = 'viewsDesc';   // viewsDesc | viewsAsc | viewsPerHourDesc | likeRateDesc
+    let currentDurationFilter = 'all';
+    let currentSortMode = 'viewsDesc';
     let currentTrendKeywords = [];
     let currentSubscriberRanges = new Set(['all']);
 
@@ -321,18 +315,14 @@
         if (num >= 1000)      return (num / 1000).toFixed(1).replace(/\.0$/, '') + '천';
         return num.toString();
     }
-    function formatNumber(num) {
-        return formatNumberKR(num);
-    }
+    function formatNumber(num) { return formatNumberKR(num); }
 
     function timeAgo(publishedAt) {
         const now = new Date();
         const published = new Date(publishedAt);
         const diffMs = now - published;
-
         const diffMinutes = Math.floor(diffMs / (1000 * 60));
         const diffHours   = Math.floor(diffMs / (1000 * 60 * 60));
-
         if (diffMinutes < 1) return '방금 전';
         if (diffHours < 1)   return `${diffMinutes}분 전`;
         if (diffHours < 48)  return `${diffHours}시간 전`;
@@ -349,7 +339,6 @@
         const seconds = parseInt(match[3] || '0');
         return hours * 3600 + minutes * 60 + seconds;
     }
-
     function formatDurationLabel(totalSeconds) {
         if (!totalSeconds || totalSeconds <= 0) return '';
         const h = Math.floor(totalSeconds / 3600);
@@ -363,19 +352,16 @@
         const kr = document.getElementById('langKR').checked;
         const en = document.getElementById('langEN').checked;
         const jp = document.getElementById('langJP').checked;
-
         if (kr) return { regionCode: 'KR', relevanceLanguage: 'ko' };
         if (en) return { regionCode: 'US', relevanceLanguage: 'en' };
         if (jp) return { regionCode: 'JP', relevanceLanguage: 'ja' };
         return { regionCode: 'KR', relevanceLanguage: 'ko' };
     }
 
-    // localStorage 사용 안전하게 처리
     function loadApiKey() {
         const apiConnBadge = document.getElementById('api-conn-badge');
         const apiKeyStatus = document.getElementById('apiKeyStatus');
         const apiKeyInput  = document.getElementById('apiKeyInput');
-
         try {
             const savedKey = window.localStorage.getItem('ytTrendApiKey');
             if (savedKey) {
@@ -395,61 +381,44 @@
             API_KEY = null;
             apiConnBadge.className = 'badge bg-secondary';
             apiConnBadge.textContent = '스토리지 접근 불가';
-            apiKeyStatus.textContent = '브라우저 설정 때문에 API 키가 저장되지 않습니다. 새로고침 때마다 다시 입력해 주세요.';
+            apiKeyStatus.textContent = '브라우저 설정 때문에 API 키가 저장되지 않습니다.';
         }
     }
 
     function saveApiKey() {
         const apiKeyInput = document.getElementById('apiKeyInput');
         const newKey = apiKeyInput.value.trim();
-
-        if (!newKey) {
-            alert('API 키를 입력해 주세요.');
-            return;
-        }
-
+        if (!newKey) { alert('API 키를 입력해 주세요.'); return; }
         API_KEY = newKey;
-        try {
-            window.localStorage.setItem('ytTrendApiKey', newKey);
-        } catch (e) {
-            console.warn('localStorage 저장 실패:', e);
-        }
+        try { window.localStorage.setItem('ytTrendApiKey', newKey); } catch(e) {}
         loadApiKey();
-        alert('API 키가 저장/변경되었습니다. (일부 브라우저에서는 새로고침 시 다시 입력해야 할 수 있습니다.)');
+        alert('API 키가 저장/변경되었습니다.');
     }
-
     function clearApiKey() {
-        try {
-            window.localStorage.removeItem('ytTrendApiKey');
-        } catch (e) {
-            console.warn('localStorage 삭제 실패:', e);
-        }
+        try { window.localStorage.removeItem('ytTrendApiKey'); } catch(e) {}
         API_KEY = null;
         loadApiKey();
         document.getElementById('video-list').innerHTML = '';
         document.getElementById('api-status').textContent = 'API 키가 해제되었습니다. 다시 사용하려면 API 키를 등록해 주세요.';
-        document.getElementById('trend-keyword-list').innerHTML = '<li><span class="trend-keyword">API 키를 먼저 등록해 주세요.</span></li>';
+        document.getElementById('trend-keyword-list').innerHTML =
+            '<li><span class="trend-keyword">API 키를 먼저 등록해 주세요.</span></li>';
         alert('API 키가 해제되었습니다.');
     }
 
     function getFriendlyErrorMessage(errorObj, contextText) {
-        const reason = errorObj && errorObj.errors && errorObj.errors[0] && errorObj.errors[0].reason
-            ? errorObj.errors[0].reason
-            : '';
-        const message = errorObj && errorObj.message ? errorObj.message : '';
-
+        const reason = errorObj?.errors?.[0]?.reason || '';
+        const message = errorObj?.message || '';
         let prefix = contextText || 'API 호출 중 오류가 발생했습니다.';
-
         switch (reason) {
             case 'quotaExceeded':
-                return `${prefix}<br>⚠️ 오늘 YouTube API 쿼터를 모두 사용했습니다. 내일 다시 시도하거나 다른 API 키를 사용해 주세요.`;
+                return `${prefix}<br>⚠️ 오늘 YouTube API 쿼터를 모두 사용했습니다.`;
             case 'accessNotConfigured':
-                return `${prefix}<br>⚠️ Google Cloud 콘솔에서 YouTube Data API v3 사용 설정이 되어 있지 않습니다.`;
+                return `${prefix}<br>⚠️ YouTube Data API v3 사용 설정이 되어 있지 않습니다.`;
             case 'ipRefererBlocked':
             case 'dailyLimitExceeded':
             case 'keyInvalid':
             case 'forbidden':
-                return `${prefix}<br>⚠️ API 키 설정(도메인 제한/IP 제한/유효성)을 확인해 주세요.`;
+                return `${prefix}<br>⚠️ API 키 설정(도메인/IP/유효성)을 확인해 주세요.`;
             default:
                 return `${prefix}<br>(${message || '알 수 없는 오류입니다.'})`;
         }
@@ -458,13 +427,9 @@
     async function fetchMostPopularForCategory(regionCode, categoryId) {
         let url = `${BASE_URL}videos?part=snippet,contentDetails,statistics&chart=mostPopular&regionCode=${regionCode}&maxResults=50&key=${API_KEY}`;
         if (categoryId) url += `&videoCategoryId=${categoryId}`;
-
         const response = await fetch(url);
         const data = await response.json();
-
-        if (data.error) {
-            throw { ytError: data.error };
-        }
+        if (data.error) throw { ytError: data.error };
         return data.items || [];
     }
 
@@ -493,13 +458,27 @@
             let allItems = [];
 
             if (!categoryId) {
-                const promises = ALL_CATEGORY_IDS.map(id =>
-                    fetchMostPopularForCategory(regionCode, id)
+                // ✅ 전체 탭: 카테고리별 에러는 무시하고 성공한 것만 합치기
+                const results = await Promise.allSettled(
+                    ALL_CATEGORY_IDS.map(id => fetchMostPopularForCategory(regionCode, id))
                 );
-                const results = await Promise.all(promises);
-                results.forEach(arr => {
-                    if (Array.isArray(arr)) allItems = allItems.concat(arr);
+
+                let firstError = null;
+                results.forEach(r => {
+                    if (r.status === 'fulfilled') {
+                        if (Array.isArray(r.value)) allItems = allItems.concat(r.value);
+                    } else {
+                        if (!firstError && r.reason?.ytError) {
+                            firstError = r.reason;
+                        }
+                        console.warn('카테고리별 호출 실패(무시):', r.reason);
+                    }
                 });
+
+                if (allItems.length === 0 && firstError) {
+                    // 모든 카테고리가 실패한 경우에만 에러로 처리
+                    throw firstError;
+                }
             } else {
                 const arr = await fetchMostPopularForCategory(regionCode, categoryId);
                 allItems = allItems.concat(arr);
@@ -510,7 +489,8 @@
                 currentChannelStatsMap = {};
                 renderVideoList([], {});
                 updateTrendKeywords([]);
-                apiStatusP.textContent = '표시할 영상이 없습니다. (이 카테고리/지역에서 인기 영상이 없거나 API 쿼터 제한일 수 있습니다)';
+                apiStatusP.textContent =
+                    '표시할 영상이 없습니다. (이 카테고리/지역에서 인기 영상이 없거나 API 쿼터 제한일 수 있습니다)';
                 document.getElementById('time-info').textContent =
                     '기준: 최근 48시간 이내 업로드된 인기 영상이 없을 수 있습니다.';
                 apiConnBadge.className = 'badge bg-warning text-dark';
@@ -542,7 +522,7 @@
             if (within48.length === 0) {
                 within48 = combinedItems;
                 document.getElementById('time-info').textContent =
-                    '⚠️ 이 카테고리/지역에서는 최근 48시간 업로드 영상이 적어 전체 인기 영상 목록을 표시합니다.';
+                    '⚠️ 최근 48시간 업로드 영상이 적어 전체 인기 영상 목록을 표시합니다.';
             } else {
                 document.getElementById('time-info').textContent =
                     '기준: 최근 48시간 이내 업로드된 인기 영상만 표시 중입니다.';
@@ -563,7 +543,7 @@
                 apiStatusP.innerHTML = getFriendlyErrorMessage(error.ytError, '⚠️ 인기 영상 목록을 가져오는 데 실패했습니다.');
             } else {
                 apiStatusP.innerHTML =
-                    '⚠️ API 호출에 실패했습니다.<br>API 키가 올바른지, 사용 설정/쿼터/리퍼러(도메인) 제한을 확인해 주세요.';
+                    '⚠️ API 호출에 실패했습니다.<br>API 키/쿼터/리퍼러(도메인) 제한을 확인해 주세요.';
             }
             apiConnBadge.className = 'badge bg-danger';
             apiConnBadge.textContent = '오류';
@@ -606,20 +586,14 @@
             let searchUrl = `${searchBase}&publishedAfter=${publishedAfter}`;
             let response = await fetch(searchUrl);
             let searchData = await response.json();
-
-            if (searchData.error) {
-                throw { ytError: searchData.error };
-            }
-
+            if (searchData.error) throw { ytError: searchData.error };
             let items = searchData.items || [];
 
             if (items.length === 0) {
                 searchUrl = searchBase;
                 response = await fetch(searchUrl);
                 searchData = await response.json();
-                if (searchData.error) {
-                    throw { ytError: searchData.error };
-                }
+                if (searchData.error) throw { ytError: searchData.error };
                 items = searchData.items || [];
             }
 
@@ -644,13 +618,9 @@
                 `${BASE_URL}videos?part=snippet,contentDetails,statistics&id=${videoIds.join(',')}&key=${API_KEY}`;
             const videosResp = await fetch(videosUrl);
             const videosData = await videosResp.json();
-
-            if (videosData.error) {
-                throw { ytError: videosData.error };
-            }
+            if (videosData.error) throw { ytError: videosData.error };
 
             let videoItems = videosData.items || [];
-
             videoItems.sort((a, b) => {
                 const va = parseInt(a.statistics?.viewCount || '0', 10);
                 const vb = parseInt(b.statistics?.viewCount || '0', 10);
@@ -666,15 +636,14 @@
             if (within48.length === 0) {
                 within48 = videoItems;
                 document.getElementById('time-info').textContent =
-                    '⚠️ 이 키워드에 대해 최근 48시간 내 업로드된 영상이 적어 전체 검색 결과를 표시합니다.';
+                    '⚠️ 최근 48시간 내 업로드된 영상이 적어 전체 검색 결과를 표시합니다.';
             } else {
                 document.getElementById('time-info').textContent =
-                    '기준: 이 키워드에 대해 최근 48시간 이내 업로드된 인기 영상만 표시 중입니다.';
+                    '기준: 최근 48시간 이내 업로드된 인기 영상만 표시 중입니다.';
             }
 
             currentBaseVideos = within48;
             currentSearchKeyword = keyword;
-
             const channelStatsMap = await fetchChannelStats(within48);
             currentChannelStatsMap = channelStatsMap;
 
@@ -699,13 +668,10 @@
     async function fetchChannelStats(videoItems) {
         const channelIds = Array.from(
             new Set(
-                videoItems
-                    .map(v => v.snippet.channelId)
-                    .filter(Boolean)
+                videoItems.map(v => v.snippet.channelId).filter(Boolean)
             )
         );
         if (channelIds.length === 0) return {};
-
         const url = `${BASE_URL}channels?part=statistics&id=${channelIds.join(',')}&key=${API_KEY}`;
         try {
             const response = await fetch(url);
@@ -734,11 +700,11 @@
     function matchSubscriberRange(subscribers, rangeKey) {
         if (!subscribers || subscribers <= 0) return false;
         switch (rangeKey) {
-            case 'sub_1_1000':       return subscribers >= 1 && subscribers < 1000;
-            case 'sub_1000_10000':   return subscribers >= 1000 && subscribers < 10000;
-            case 'sub_10000_40000':  return subscribers >= 10000 && subscribers < 40000;
-            case 'sub_50000_plus':   return subscribers >= 50000;
-            default:                 return true;
+            case 'sub_1_1000':      return subscribers >= 1 && subscribers < 1000;
+            case 'sub_1000_10000':  return subscribers >= 1000 && subscribers < 10000;
+            case 'sub_10000_40000': return subscribers >= 10000 && subscribers < 40000;
+            case 'sub_50000_plus':  return subscribers >= 50000;
+            default:                return true;
         }
     }
 
@@ -757,8 +723,7 @@
 
         if (!(currentSubscriberRanges.size === 1 && currentSubscriberRanges.has('all'))) {
             list = list.filter(v => {
-                const channelId = v.snippet.channelId;
-                const subs = currentChannelStatsMap[channelId] || 0;
+                const subs = currentChannelStatsMap[v.snippet.channelId] || 0;
                 for (const rangeKey of currentSubscriberRanges) {
                     if (matchSubscriberRange(subs, rangeKey)) return true;
                 }
@@ -769,31 +734,23 @@
         list.sort((a, b) => {
             const va = parseInt(a.statistics?.viewCount || '0', 10);
             const vb = parseInt(b.statistics?.viewCount || '0', 10);
-
             const la = parseInt(a.statistics?.likeCount || '0', 10);
             const lb = parseInt(b.statistics?.likeCount || '0', 10);
-
             const ta = new Date(a.snippet.publishedAt);
             const tb = new Date(b.snippet.publishedAt);
             const ha = Math.max((Date.now() - ta.getTime()) / (1000 * 60 * 60), 1 / 60);
             const hb = Math.max((Date.now() - tb.getTime()) / (1000 * 60 * 60), 1 / 60);
-
             const likeRateA = va > 0 ? la / va : 0;
             const likeRateB = vb > 0 ? lb / vb : 0;
-
             const speedA = va / ha;
             const speedB = vb / hb;
 
             switch (currentSortMode) {
-                case 'viewsAsc':
-                    return va - vb;
-                case 'likeRateDesc':
-                    return likeRateB - likeRateA;
-                case 'viewsPerHourDesc':
-                    return speedB - speedA;
+                case 'viewsAsc':         return va - vb;
+                case 'likeRateDesc':     return likeRateB - likeRateA;
+                case 'viewsPerHourDesc': return speedB - speedA;
                 case 'viewsDesc':
-                default:
-                    return vb - va;
+                default:                 return vb - va;
             }
         });
 
@@ -804,7 +761,6 @@
         const apiStatusP = document.getElementById('api-status');
         const list = getFilteredVideos();
         renderVideoList(list, currentChannelStatsMap);
-
         if (!apiStatusP) return;
         if (currentSearchKeyword) {
             apiStatusP.textContent = `"${currentSearchKeyword}" 검색 결과: ${list.length}개`;
@@ -817,8 +773,7 @@
         const videoListDiv = document.getElementById('video-list');
         videoListDiv.innerHTML = '';
         videos.forEach(video => {
-            const cardHtml = createVideoCard(video, channelStatsMap);
-            videoListDiv.innerHTML += cardHtml;
+            videoListDiv.innerHTML += createVideoCard(video, channelStatsMap);
         });
     }
 
@@ -826,12 +781,10 @@
         const title = video.snippet.title;
         const channelTitle = video.snippet.channelTitle;
         const channelId = video.snippet.channelId;
-
         const rawId = video.id;
         const videoId = typeof rawId === 'string'
             ? rawId
             : (rawId && rawId.videoId ? rawId.videoId : '');
-
         const thumbnailUrl = video.snippet.thumbnails.medium.url;
         const viewCount = video.statistics.viewCount ? parseInt(video.statistics.viewCount) : 0;
         const likeCount = video.statistics.likeCount ? parseInt(video.statistics.likeCount) : 0;
@@ -843,7 +796,6 @@
         const publishedDate = new Date(publishedAt);
         const hoursSinceUpload = Math.max((Date.now() - publishedDate.getTime()) / (1000 * 60 * 60), 1 / 60);
         const viewVelocity = viewCount > 0 ? viewCount / hoursSinceUpload : 0;
-
         const likeRate = viewCount > 0 ? (likeCount / viewCount) * 100 : 0;
 
         const durationSeconds = parseDurationSeconds(video.contentDetails?.duration || '');
@@ -892,12 +844,8 @@
 
     function tokenizeText(text) {
         if (!text) return [];
-        return text
-            .toLowerCase()
-            .split(/[^0-9a-zA-Z가-힣ぁ-んァ-ン一-龯]+/g)
-            .filter(Boolean);
+        return text.toLowerCase().split(/[^0-9a-zA-Z가-힣ぁ-んァ-ン一-龯]+/g).filter(Boolean);
     }
-
     function isStopword(token) {
         if (!token) return true;
         if (STOPWORDS_COMMON.has(token)) return true;
@@ -906,7 +854,6 @@
         if (STOPWORDS_JA.has(token))     return true;
         return false;
     }
-
     function isValidToken(token) {
         if (!token) return false;
         if (token.length < 2) return false;
@@ -917,28 +864,23 @@
 
     function buildTrendKeywordsFromVideos(videos) {
         const wordScoreMap = new Map();
-
         videos.forEach(video => {
             const title = video.snippet.title || '';
             const tags  = video.snippet.tags || [];
             const views = parseInt(video.statistics?.viewCount || '0', 10);
             const weight = views > 0 ? Math.log10(views + 1) : 1;
-
             let text = title + ' ' + tags.join(' ') + ' ';
             const tokens = tokenizeText(text);
             const tokenSet = new Set(tokens);
-
             tokenSet.forEach(tok => {
                 if (!isValidToken(tok)) return;
                 const prev = wordScoreMap.get(tok) || 0;
                 wordScoreMap.set(tok, prev + weight);
             });
         });
-
         const entries = Array.from(wordScoreMap.entries())
             .map(([word, score]) => ({ word, score }))
             .sort((a, b) => b.score - a.score);
-
         return entries.slice(0, 30);
     }
 
@@ -947,7 +889,6 @@
         const infoEl = document.getElementById('trend-region-info');
         if (infoEl) infoEl.textContent = `지역: ${regionCode} 기준`;
     }
-
     function updateTrendUpdatedTime() {
         const el = document.getElementById('trend-updated-time');
         if (!el) return;
@@ -961,7 +902,6 @@
         if (!listEl) return;
 
         listEl.innerHTML = '';
-
         if (!currentTrendKeywords.length) {
             listEl.innerHTML = '<li><span class="trend-keyword">트렌드 키워드를 계산할 영상 데이터가 없습니다.</span></li>';
             return;
@@ -969,15 +909,12 @@
 
         currentTrendKeywords.forEach((item, idx) => {
             const li = document.createElement('li');
-
             const spanKeyword = document.createElement('span');
             spanKeyword.className = 'trend-keyword';
             spanKeyword.textContent = `${idx + 1}. ${item.word}`;
-
             const spanScore = document.createElement('span');
             spanScore.className = 'trend-score-badge';
             spanScore.textContent = `score ${item.score.toFixed(1)}`;
-
             spanKeyword.addEventListener('click', () => {
                 const searchInput = document.getElementById('searchInput');
                 const searchBtn = document.getElementById('searchBtn');
@@ -986,15 +923,12 @@
                     searchBtn.click();
                 }
             });
-
             li.appendChild(spanKeyword);
             li.appendChild(spanScore);
             listEl.appendChild(li);
         });
-
         updateTrendUpdatedTime();
     }
-
     function buildAndRenderTrendKeywords() {
         if (!currentBaseVideos || currentBaseVideos.length === 0) {
             updateTrendKeywords([]);
@@ -1008,13 +942,10 @@
         button.addEventListener('click', function() {
             document.querySelector('.category-button.active')?.classList.remove('active');
             this.classList.add('active');
-
             currentCategory = this.getAttribute('data-category');
             const categoryId = CATEGORIES[currentCategory];
-
             document.getElementById('category-title').textContent = this.textContent.trim();
-            const input = document.getElementById('searchInput');
-            input.value = '';
+            document.getElementById('searchInput').value = '';
             currentSearchKeyword = '';
             fetchPopularVideos(categoryId);
         });
@@ -1025,24 +956,17 @@
         if (!el) return;
         el.addEventListener('change', (e) => {
             const target = e.target;
-            if (!target.checked) {
-                target.checked = true;
-                return;
-            }
+            if (!target.checked) { target.checked = true; return; }
             ['langKR', 'langEN', 'langJP'].forEach(otherId => {
                 if (otherId !== id) {
                     const otherEl = document.getElementById(otherId);
                     if (otherEl) otherEl.checked = false;
                 }
             });
-
             const categoryId = CATEGORIES[currentCategory];
             const keyword = document.getElementById('searchInput').value.trim();
-            if (keyword) {
-                searchVideosByKeyword(keyword);
-            } else {
-                fetchPopularVideos(categoryId);
-            }
+            if (keyword) searchVideosByKeyword(keyword);
+            else fetchPopularVideos(categoryId);
         });
     });
 
@@ -1054,7 +978,6 @@
             updateVideoListAndStatus();
         });
     });
-
     document.querySelectorAll('.sort-button').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelector('.sort-button.active')?.classList.remove('active');
@@ -1067,7 +990,6 @@
     document.querySelectorAll('.subscriber-filter-checkbox').forEach(cb => {
         cb.addEventListener('change', function () {
             const range = this.getAttribute('data-range');
-
             if (range === 'all') {
                 if (this.checked) {
                     currentSubscriberRanges = new Set(['all']);
@@ -1093,7 +1015,6 @@
                     }
                 }
             }
-
             updateVideoListAndStatus();
         });
     });
@@ -1101,7 +1022,6 @@
     document.getElementById('searchBtn').addEventListener('click', () => {
         const keyword = document.getElementById('searchInput').value.trim();
         const categoryId = CATEGORIES[currentCategory];
-
         if (!keyword) {
             currentSearchKeyword = '';
             fetchPopularVideos(categoryId);
@@ -1109,31 +1029,20 @@
             searchVideosByKeyword(keyword);
         }
     });
-
     document.getElementById('searchInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            document.getElementById('searchBtn').click();
-        }
+        if (e.key === 'Enter') document.getElementById('searchBtn').click();
     });
 
     document.addEventListener('DOMContentLoaded', () => {
         loadApiKey();
-
-        const saveBtn = document.getElementById('saveApiKeyBtn');
-        const clearBtn = document.getElementById('clearApiKeyBtn');
-        if (saveBtn) saveBtn.addEventListener('click', saveApiKey);
-        if (clearBtn) clearBtn.addEventListener('click', clearApiKey);
-
+        document.getElementById('saveApiKeyBtn').addEventListener('click', saveApiKey);
+        document.getElementById('clearApiKeyBtn').addEventListener('click', clearApiKey);
         updateTrendRegionInfo();
         fetchPopularVideos(CATEGORIES[currentCategory]);
-
         setInterval(() => {
             const categoryId = CATEGORIES[currentCategory];
-            if (currentSearchKeyword) {
-                searchVideosByKeyword(currentSearchKeyword);
-            } else {
-                fetchPopularVideos(categoryId);
-            }
+            if (currentSearchKeyword) searchVideosByKeyword(currentSearchKeyword);
+            else fetchPopularVideos(categoryId);
         }, 30 * 60 * 1000);
     });
 </script>
