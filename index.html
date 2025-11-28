@@ -308,12 +308,29 @@
     ]);
 
     // 숫자 포맷 (K, M, B)
-    function formatNumber(num) {
-        if (num >= 1000000000) return (num / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B';
-        if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-        if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-        return num.toString();
+  // 숫자 → 한국식 단위 표기
+function formatNumberKR(num) {
+    if (num >= 100000000) { // 1억 이상
+        return (num / 100000000).toFixed(1).replace(/\.0$/, '') + '억';
     }
+    if (num >= 10000000) { // 천만
+        return (num / 10000000).toFixed(1).replace(/\.0$/, '') + '천만';
+    }
+    if (num >= 1000000) { // 백만
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + '백만';
+    }
+    if (num >= 100000) { // 십만
+        return (num / 100000).toFixed(1).replace(/\.0$/, '') + '십만';
+    }
+    if (num >= 10000) { // 만
+        return (num / 10000).toFixed(1).replace(/\.0$/, '') + '만';
+    }
+    if (num >= 1000) { // 천 단위
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + '천';
+    }
+    return num.toString();
+}
+
 
     // 업로드 시간 → "몇 시간 전" (항상 시간 단위로 표시)
 function timeAgo(publishedAt) {
@@ -1090,4 +1107,5 @@ function timeAgo(publishedAt) {
 
 </body>
 </html>
+
 
