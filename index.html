@@ -192,6 +192,41 @@
             <button class="btn btn-outline-secondary sort-button" data-sort="viewsAsc">조회수 낮은 순</button>
         </div>
     </div>
+
+    <!-- 구독자 수 필터 -->
+    <div class="text-center mt-2">
+        <span class="text-muted me-2">구독자 수 필터:</span>
+
+        <div class="form-check form-check-inline">
+            <input class="form-check-input subscriber-filter-checkbox" type="checkbox"
+                   id="subFilterAll" data-range="all" checked>
+            <label class="form-check-label" for="subFilterAll">전체</label>
+        </div>
+
+        <div class="form-check form-check-inline">
+            <input class="form-check-input subscriber-filter-checkbox" type="checkbox"
+                   id="subFilter1_1000" data-range="sub_1_1000">
+            <label class="form-check-label" for="subFilter1_1000">1 ~ 1,000명</label>
+        </div>
+
+        <div class="form-check form-check-inline">
+            <input class="form-check-input subscriber-filter-checkbox" type="checkbox"
+                   id="subFilter1000_10000" data-range="sub_1000_10000">
+            <label class="form-check-label" for="subFilter1000_10000">1,000 ~ 1만명</label>
+        </div>
+
+        <div class="form-check form-check-inline">
+            <input class="form-check-input subscriber-filter-checkbox" type="checkbox"
+                   id="subFilter10000_40000" data-range="sub_10000_40000">
+            <label class="form-check-label" for="subFilter10000_40000">1만 ~ 4만명</label>
+        </div>
+
+        <div class="form-check form-check-inline">
+            <input class="form-check-input subscriber-filter-checkbox" type="checkbox"
+                   id="subFilter50000_plus" data-range="sub_50000_plus">
+            <label class="form-check-label" for="subFilter50000_plus">5만 이상</label>
+        </div>
+    </div>
 </div>
 
 <div class="container main-content">
@@ -250,8 +285,10 @@
     let currentDurationFilter = 'all';   // all | short | long
     let currentSortMode = 'viewsDesc';   // viewsDesc | viewsAsc
     let currentTrendKeywords = [];       // [{word, score}]
+    // 구독자 필터: 선택된 구간들 (기본값: 'all')
+    let currentSubscriberRanges = new Set(['all']);
 
-    // 공통/언어별 stopwords (대충이라도 잡음)
+    // 공통/언어별 stopwords
     const STOPWORDS_COMMON = new Set([
         'official','video','music','mv','the','and','for','with','from','feat','live','of','in','on',
         '방송','영상','공식','채널','티비','tv','full','ver','version','officialmv','shorts','쇼츠',
@@ -495,7 +532,7 @@
         }
     }
 
-    // 키워드 검색 (폭싹 등) – Search API + Videos API
+    // 키워드 검색 – Search API + Videos API
     async function searchVideosByKeyword(keyword) {
         const videoListDiv = document.getElementById('video-list');
         const apiStatusP = document.getElementById('api-status');
@@ -660,21 +697,61 @@
         }
     }
 
-    // 길이 + 정렬 필터 적용한 리스트
+    // 구독자 수가 특정 구간에 해당하는지 체크
+    function matchSubscriberRange(subscribers, rangeKey) {
+        // 숨김 채널(0명)은 어떤 구간에도 넣지 않음
+        if (!subscribers || subscribers <= 0) return false;
+
+        switch (rangeKey) {
+            case 'sub_1_1000':
+                // 1 ~ 999
+                return subscribers >= 1 && subscribers < 1000;
+            case 'sub_1000_10000':
+                // 1,000 ~ 9,999
+                return subscribers >= 1000 && subscribers < 10000;
+            case 'sub_10000_40000':
+                // 10,000 ~ 39,999
+                return subscribers >= 10000 && subscribers < 40000;
+            case 'sub_50000_plus':
+                // 50,000 이상
+                return subscribers >= 50000;
+            default:
+                return true;
+        }
+    }
+
+    // 길이 + 정렬 + 구독자 필터 적용한 리스트
     function getFilteredVideos() {
         let list = currentBaseVideos.slice();
 
-        // 길이 필터
+        // 1) 길이 필터
         if (currentDurationFilter !== 'all') {
             list = list.filter(v => {
                 const seconds = parseDurationSeconds(v.contentDetails?.duration || '');
                 if (currentDurationFilter === 'short') return seconds > 0 && seconds <= 60;
-                if (currentDurationFilter === 'long') return seconds > 60;
+                if (currentDurationFilter === 'long')  return seconds > 60;
                 return true;
             });
         }
 
-        // 조회수 정렬
+        // 2) 구독자 필터
+        //   '전체'만 체크되어 있으면 필터 적용 X
+        if (!(currentSubscriberRanges.size === 1 && currentSubscriberRanges.has('all'))) {
+            list = list.filter(v => {
+                const channelId = v.snippet.channelId;
+                const subs = currentChannelStatsMap[channelId] || 0;
+
+                // 선택된 구간 중 하나라도 true면 통과
+                for (const rangeKey of currentSubscriberRanges) {
+                    if (matchSubscriberRange(subs, rangeKey)) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+        }
+
+        // 3) 조회수 정렬
         list.sort((a, b) => {
             const va = parseInt(a.statistics?.viewCount || '0', 10);
             const vb = parseInt(b.statistics?.viewCount || '0', 10);
@@ -757,7 +834,6 @@
     // 텍스트 → 토큰 배열
     function tokenizeText(text) {
         if (!text) return [];
-        // 영어/숫자/한글/일본어 범위 기준으로 쪼갬
         const tokens = text
             .toLowerCase()
             .split(/[^0-9a-zA-Z가-힣ぁ-んァ-ン一-龯]+/g)
@@ -776,8 +852,8 @@
 
     function isValidToken(token) {
         if (!token) return false;
-        if (token.length < 2) return false;                // 한 글자는 거의 의미 없음
-        if (/^\d+$/.test(token)) return false;             // 순수 숫자 제외
+        if (token.length < 2) return false;
+        if (/^\d+$/.test(token)) return false;
         if (isStopword(token)) return false;
         return true;
     }
@@ -792,15 +868,15 @@
             const desc = video.snippet.description || '';
             const views = parseInt(video.statistics?.viewCount || '0', 10);
 
-            // 조회수 가중치 (log10 사용)
+            // 조회수 가중치
             const weight = views > 0 ? Math.log10(views + 1) : 1;
 
             let text = title + ' ' + tags.join(' ') + ' ';
-            // 설명까지 넣고 싶다면 아래 주석 해제
+            // 설명까지 넣고 싶으면 아래 주석 해제
             // text += ' ' + desc;
 
             const tokens = tokenizeText(text);
-            const tokenSet = new Set(tokens); // 같은 영상 안에서는 중복 단어 하나만 카운트
+            const tokenSet = new Set(tokens); // 같은 영상 안에서는 중복 제거
 
             tokenSet.forEach(tok => {
                 if (!isValidToken(tok)) return;
@@ -885,7 +961,6 @@
             const categoryId = CATEGORIES[currentCategory];
 
             document.getElementById('category-title').textContent = this.textContent.trim();
-            // 카테고리 바꾸면 검색모드 해제하고 트렌드 모드로
             const input = document.getElementById('searchInput');
             input.value = '';
             currentSearchKeyword = '';
@@ -893,7 +968,7 @@
         });
     });
 
-    // 언어 체크박스 → 재로드 (중복 선택 고려 없이 마지막 true 우선)
+    // 언어 체크박스
     ['langKR', 'langEN', 'langJP'].forEach(id => {
         document.getElementById(id).addEventListener('change', () => {
             const categoryId = CATEGORIES[currentCategory];
@@ -913,7 +988,6 @@
             this.classList.add('active');
             currentDurationFilter = this.getAttribute('data-duration');
             updateVideoListAndStatus();
-            // 길이 필터는 "표시되는 영상"만 바꾸는 거라, 키워드는 그대로 유지
         });
     });
 
@@ -927,13 +1001,53 @@
         });
     });
 
+    // 구독자 필터 체크박스
+    document.querySelectorAll('.subscriber-filter-checkbox').forEach(cb => {
+        cb.addEventListener('change', function () {
+            const range = this.getAttribute('data-range');
+
+            if (range === 'all') {
+                // "전체" 클릭 시
+                if (this.checked) {
+                    currentSubscriberRanges = new Set(['all']);
+                    document.querySelectorAll('.subscriber-filter-checkbox').forEach(other => {
+                        if (other !== this) other.checked = false;
+                    });
+                } else {
+                    // 전체를 해제하면 아무 구간도 없는 상태가 되므로 다시 켜기
+                    this.checked = true;
+                    currentSubscriberRanges = new Set(['all']);
+                }
+            } else {
+                if (this.checked) {
+                    // 개별 구간 체크 → 전체 해제
+                    currentSubscriberRanges.delete('all');
+                    const allCb = document.getElementById('subFilterAll');
+                    if (allCb) allCb.checked = false;
+
+                    currentSubscriberRanges.add(range);
+                } else {
+                    currentSubscriberRanges.delete(range);
+
+                    // 아무 구간도 안 남으면 자동으로 전체 복귀
+                    if (currentSubscriberRanges.size === 0) {
+                        currentSubscriberRanges.add('all');
+                        const allCb = document.getElementById('subFilterAll');
+                        if (allCb) allCb.checked = true;
+                    }
+                }
+            }
+
+            updateVideoListAndStatus();
+        });
+    });
+
     // 검색 버튼 클릭
     document.getElementById('searchBtn').addEventListener('click', () => {
         const keyword = document.getElementById('searchInput').value.trim();
         const categoryId = CATEGORIES[currentCategory];
 
         if (!keyword) {
-            // 검색어 없으면 현재 카테고리 트렌드로 복귀
             currentSearchKeyword = '';
             fetchPopularVideos(categoryId);
         } else {
@@ -960,7 +1074,7 @@
         updateTrendRegionInfo();
         fetchPopularVideos(CATEGORIES[currentCategory]);
 
-        // 원하면 30분마다 자동 새로고침 (인기 영상 + 트렌드 키워드)
+        // 30분마다 자동 새로고침
         setInterval(() => {
             const categoryId = CATEGORIES[currentCategory];
             if (currentSearchKeyword) {
