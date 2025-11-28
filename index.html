@@ -802,69 +802,80 @@ function formatNumber(num) {
     }
 
     function createVideoCard(video, channelStatsMap) {
-        const title = video.snippet.title;
-        const channelTitle = video.snippet.channelTitle;
-        const channelId = video.snippet.channelId;
-        const rawId = video.id;
-        const videoId = typeof rawId === 'string'
-            ? rawId
-            : (rawId && rawId.videoId ? rawId.videoId : '');
-        const thumbnailUrl = video.snippet.thumbnails.medium.url;
-        const viewCount = video.statistics.viewCount ? parseInt(video.statistics.viewCount) : 0;
-        const likeCount = video.statistics.likeCount ? parseInt(video.statistics.likeCount) : 0;
-        const commentCount = video.statistics.commentCount ? parseInt(video.statistics.commentCount) : 0;
-        const subscriberCount = channelStatsMap[channelId] || 0;
-        const publishedAt = video.snippet.publishedAt;
-        const timeAgoText = timeAgo(publishedAt);
+    const title = video.snippet.title;
+    const channelTitle = video.snippet.channelTitle;
+    const channelId = video.snippet.channelId;
+    const videoId = video.id;
+    const thumbnailUrl = video.snippet.thumbnails.medium.url;
 
-        const publishedDate = new Date(publishedAt);
-        const hoursSinceUpload = Math.max((Date.now() - publishedDate.getTime()) / (1000 * 60 * 60), 1 / 60);
-        const viewVelocity = viewCount > 0 ? viewCount / hoursSinceUpload : 0;
-        const likeRate = viewCount > 0 ? (likeCount / viewCount) * 100 : 0;
+    const viewCount = video.statistics.viewCount ? parseInt(video.statistics.viewCount) : 0;
+    const likeCount = video.statistics.likeCount ? parseInt(video.statistics.likeCount) : 0;
+    const commentCount = video.statistics.commentCount ? parseInt(video.statistics.commentCount) : 0;
+    const subscriberCount = channelStatsMap[channelId] || 0;
 
-        const durationSeconds = parseDurationSeconds(video.contentDetails?.duration || '');
-        const durationLabel = formatDurationLabel(durationSeconds);
+    const publishedAt = video.snippet.publishedAt;
+    const timeAgoText = timeAgo(publishedAt);
 
-        return `
-            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-                <div class="video-card">
-                    <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" style="position:relative;display:block;">
-                        <img src="${thumbnailUrl}" class="card-img-top" alt="${title}">
-                        ${
-                            durationLabel
-                                ? `<span style="
-                                    position:absolute;
-                                    right:4px;
-                                    bottom:4px;
-                                    background:rgba(0,0,0,0.8);
-                                    color:#fff;
-                                    font-size:0.75rem;
-                                    padding:2px 4px;
-                                    border-radius:3px;
-                                ">${durationLabel}</span>`
-                                : ''
-                        }
-                    </a>
-                    <div class="card-body">
-                        <h5 class="card-title">${title}</h5>
-                        <p class="card-text text-muted mb-1">${channelTitle}</p>
-                        <p class="card-text">
-                            <span class="badge badge-time">${timeAgoText}</span>
-                        </p>
-                        <div>
-                            <span class="stats-badge badge-views">${formatNumber(viewCount)} 조회</span>
-                            <span class="stats-badge badge-likes">${formatNumber(likeCount)} 좋아요</span>
-                            <span class="stats-badge badge-comments">${formatNumber(commentCount)} 댓글</span>
-                            <span class="stats-badge badge-subscribers">${formatNumber(subscriberCount)} 구독</span>
-                        </div>
-                        <p class="card-text mt-1" style="font-size:0.75rem; color:#6c757d;">
-                            조회 속도: ${formatNumber(Math.round(viewVelocity))}회/시간 · 좋아요율: ${likeRate.toFixed(1)}%
-                        </p>
+    const publishedDate = new Date(publishedAt);
+    const hoursSinceUpload = Math.max((Date.now() - publishedDate.getTime()) / (1000 * 60 * 60), 1 / 60);
+    const viewVelocity = viewCount > 0 ? viewCount / hoursSinceUpload : 0;
+
+    const likeRate = viewCount > 0 ? (likeCount / viewCount) * 100 : 0;
+
+    const durationSeconds = parseDurationSeconds(video.contentDetails?.duration || '');
+    const durationLabel = formatDurationLabel(durationSeconds);
+
+    return `
+        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+            <div class="video-card">
+                <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" style="position:relative;display:block;">
+                    <img src="${thumbnailUrl}" class="card-img-top" alt="${title}">
+                    ${
+                        durationLabel
+                            ? `<span style="
+                                position:absolute;
+                                right:4px;
+                                bottom:4px;
+                                background:rgba(0,0,0,0.8);
+                                color:#fff;
+                                font-size:0.75rem;
+                                padding:2px 4px;
+                                border-radius:3px;
+                            ">${durationLabel}</span>`
+                            : ''
+                    }
+                </a>
+
+                <div class="card-body">
+                    <h5 class="card-title">${title}</h5>
+                    <p class="card-text text-muted mb-1">${channelTitle}</p>
+                    <p class="card-text">
+                        <span class="badge badge-time">${timeAgoText}</span>
+                    </p>
+
+                    <div>
+                        <span class="stats-badge badge-views">${formatNumber(viewCount)} 조회</span>
+                        <span class="stats-badge badge-likes">${formatNumber(likeCount)} 좋아요</span>
+                        <span class="stats-badge badge-comments">${formatNumber(commentCount)} 댓글</span>
+                        <span class="stats-badge badge-subscribers">${formatNumber(subscriberCount)} 구독</span>
                     </div>
+
+                    <!-- 추가된 부분 -->
+                    <div class="mt-1">
+                        <span class="stats-badge badge-velocity">
+                            ${formatNumber(Math.round(viewVelocity))}회/시간
+                        </span>
+                        <span class="stats-badge badge-likeRate">
+                            좋아요율 ${likeRate.toFixed(1)}%
+                        </span>
+                    </div>
+
                 </div>
             </div>
-        `;
-    }
+        </div>
+    `;
+}
+
 
     function tokenizeText(text) {
         if (!text) return [];
@@ -1073,4 +1084,5 @@ function formatNumber(num) {
 
 </body>
 </html>
+
 
