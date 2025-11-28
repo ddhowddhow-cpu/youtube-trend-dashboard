@@ -115,6 +115,10 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            cursor: pointer; /* 클릭 가능한 느낌 */
+        }
+        .trend-keyword:hover {
+            text-decoration: underline;
         }
         .trend-score-badge {
             font-size: 0.7rem;
@@ -184,12 +188,15 @@
         <div class="btn-group btn-group-sm" role="group" aria-label="Duration filter">
             <button class="btn btn-outline-dark duration-button active" data-duration="all">전체 길이</button>
             <button class="btn btn-outline-dark duration-button" data-duration="short">1분 이하</button>
-            <button class="btn btn-outline-dark duration-button" data-duration="long">1분 이상</button>
+            <button class="btn btn-outline-dark duration-button" data-duration="mid">1~10분</button>
+            <button class="btn btn-outline-dark duration-button" data-duration="long">10분 이상</button>
         </div>
 
         <div class="btn-group btn-group-sm" role="group" aria-label="View sort">
             <button class="btn btn-outline-secondary sort-button active" data-sort="viewsDesc">조회수 높은 순</button>
             <button class="btn btn-outline-secondary sort-button" data-sort="viewsAsc">조회수 낮은 순</button>
+            <button class="btn btn-outline-secondary sort-button" data-sort="viewsPerHourDesc">조회 속도 순</button>
+            <button class="btn btn-outline-secondary sort-button" data-sort="likeRateDesc">좋아요율 순</button>
         </div>
     </div>
 
@@ -282,8 +289,8 @@
     let currentBaseVideos = [];      // 48시간 필터까지 적용된 기본 리스트
     let currentChannelStatsMap = {};
     let currentSearchKeyword = '';   // API 검색에 사용된 키워드 (없으면 트렌드 모드)
-    let currentDurationFilter = 'all';   // all | short | long
-    let currentSortMode = 'viewsDesc';   // viewsDesc | viewsAsc
+    let currentDurationFilter = 'all';   // all | short | mid | long
+    let currentSortMode = 'viewsDesc';   // viewsDesc | viewsAsc | viewsPerHourDesc | likeRateDesc
     let currentTrendKeywords = [];       // [{word, score}]
     // 구독자 필터: 선택된 구간들 (기본값: 'all')
     let currentSubscriberRanges = new Set(['all']);
@@ -336,29 +343,29 @@
     }
 
     // 업로드 시간 → 48시간까지는 "시간 전", 그 이후는 "일 전"
-function timeAgo(publishedAt) {
-    const now = new Date();
-    const published = new Date(publishedAt);
-    const diffMs = now - published;
+    function timeAgo(publishedAt) {
+        const now = new Date();
+        const published = new Date(publishedAt);
+        const diffMs = now - published;
 
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-    const diffHours   = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+        const diffHours   = Math.floor(diffMs / (1000 * 60 * 60));
 
-    if (diffMinutes < 1) {
-        return '방금 전';
-    }
-    if (diffHours < 1) {
-        return `${diffMinutes}분 전`;
-    }
-    // 48시간까지는 시간 단위로 표시
-    if (diffHours < 48) {
-        return `${diffHours}시간 전`;
-    }
+        if (diffMinutes < 1) {
+            return '방금 전';
+        }
+        if (diffHours < 1) {
+            return `${diffMinutes}분 전`;
+        }
+        // 48시간까지는 시간 단위로 표시
+        if (diffHours < 48) {
+            return `${diffHours}시간 전`;
+        }
 
-    // 48시간(2일) 넘으면 일 단위로 표시
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays}일 전`;
-}
+        // 48시간(2일) 넘으면 일 단위로 표시
+        const diffDays = Math.floor(diffHours / 24);
+        return `${diffDays}일 전`;
+    }
 
     // ISO8601 duration → 초 단위
     function parseDurationSeconds(iso) {
@@ -369,6 +376,17 @@ function timeAgo(publishedAt) {
         const minutes = parseInt(match[2] || '0');
         const seconds = parseInt(match[3] || '0');
         return hours * 3600 + minutes * 60 + seconds;
+    }
+
+    function formatDurationLabel(totalSeconds) {
+        if (!totalSeconds || totalSeconds <= 0) return '';
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+        if (h > 0) {
+            return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+        return `${m}:${String(s).padStart(2, '0')}`;
     }
 
     // 언어/지역 설정
@@ -430,6 +448,27 @@ function timeAgo(publishedAt) {
         alert('API 키가 해제되었습니다.');
     }
 
+    // YouTube API 에러 메시지 변환
+    function getFriendlyErrorMessage(errorObj, contextText) {
+        const reason = errorObj?.errors?.[0]?.reason || '';
+        const message = errorObj?.message || '';
+
+        let prefix = contextText || 'API 호출 중 오류가 발생했습니다.';
+
+        switch (reason) {
+            case 'quotaExceeded':
+                return `${prefix}<br>⚠️ 오늘 YouTube API 쿼터를 모두 사용했습니다. 내일 다시 시도하거나 다른 API 키를 사용해 주세요.`;
+            case 'accessNotConfigured':
+                return `${prefix}<br>⚠️ Google Cloud 콘솔에서 YouTube Data API v3 사용 설정이 되어 있지 않습니다.`;
+            case 'ipRefererBlocked':
+            case 'dailyLimitExceeded':
+            case 'keyInvalid':
+                return `${prefix}<br>⚠️ API 키 설정(도메인 제한/IP 제한/유효성)을 확인해 주세요.`;
+            default:
+                return `${prefix}<br>(${message || '알 수 없는 오류입니다.'})`;
+        }
+    }
+
     // 특정 카테고리의 mostPopular 리스트 가져오기
     async function fetchMostPopularForCategory(regionCode, categoryId) {
         let url = `${BASE_URL}videos?part=snippet,contentDetails,statistics&chart=mostPopular&regionCode=${regionCode}&maxResults=50&key=${API_KEY}`;
@@ -437,19 +476,14 @@ function timeAgo(publishedAt) {
             url += `&videoCategoryId=${categoryId}`;
         }
 
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
+        const response = await fetch(url);
+        const data = await response.json();
 
-            if (data.error) {
-                console.error('YouTube API category error:', categoryId, data.error);
-                return [];
-            }
-            return data.items || [];
-        } catch (e) {
-            console.error('fetchMostPopularForCategory fetch error:', categoryId, e);
-            return [];
+        if (data.error) {
+            // 상위에서 처리할 수 있도록 그대로 던짐
+            throw { ytError: data.error };
         }
+        return data.items || [];
     }
 
     // 인기 동영상 (트렌드 모드)
@@ -551,8 +585,12 @@ function timeAgo(publishedAt) {
             apiConnBadge.textContent = 'API 연결 정상';
         } catch (error) {
             console.error('API 호출 중 오류 발생:', error);
-            apiStatusP.innerHTML =
-                '⚠️ API 호출에 실패했습니다.<br>API 키가 올바른지, 사용 설정/쿼터/리퍼러(도메인) 제한을 확인해 주세요.';
+            if (error.ytError) {
+                apiStatusP.innerHTML = getFriendlyErrorMessage(error.ytError, '⚠️ 인기 영상 목록을 가져오는 데 실패했습니다.');
+            } else {
+                apiStatusP.innerHTML =
+                    '⚠️ API 호출에 실패했습니다.<br>API 키가 올바른지, 사용 설정/쿼터/리퍼러(도메인) 제한을 확인해 주세요.';
+            }
             apiConnBadge.className = 'badge bg-danger';
             apiConnBadge.textContent = '오류';
             updateTrendKeywords([]);
@@ -600,8 +638,7 @@ function timeAgo(publishedAt) {
             let searchData = await response.json();
 
             if (searchData.error) {
-                console.error('search API error:', searchData.error);
-                throw new Error('search API error');
+                throw { ytError: searchData.error };
             }
 
             let items = searchData.items || [];
@@ -612,8 +649,7 @@ function timeAgo(publishedAt) {
                 response = await fetch(searchUrl);
                 searchData = await response.json();
                 if (searchData.error) {
-                    console.error('search API error (no date):', searchData.error);
-                    throw new Error('search API error');
+                    throw { ytError: searchData.error };
                 }
                 items = searchData.items || [];
             }
@@ -642,8 +678,7 @@ function timeAgo(publishedAt) {
             const videosData = await videosResp.json();
 
             if (videosData.error) {
-                console.error('videos API error for search:', videosData.error);
-                throw new Error('videos API error');
+                throw { ytError: videosData.error };
             }
 
             let videoItems = videosData.items || [];
@@ -683,8 +718,12 @@ function timeAgo(publishedAt) {
             apiConnBadge.textContent = '검색 완료';
         } catch (error) {
             console.error('검색 API 호출 중 오류 발생:', error);
-            apiStatusP.innerHTML =
-                '⚠️ 검색 API 호출에 실패했습니다.<br>API 키/쿼터/리퍼러(도메인) 제한을 확인해 주세요.';
+            if (error.ytError) {
+                apiStatusP.innerHTML = getFriendlyErrorMessage(error.ytError, `⚠️ "${keyword}" 검색에 실패했습니다.`);
+            } else {
+                apiStatusP.innerHTML =
+                    '⚠️ 검색 API 호출에 실패했습니다.<br>API 키/쿼터/리퍼러(도메인) 제한을 확인해 주세요.';
+            }
             apiConnBadge.className = 'badge bg-danger';
             apiConnBadge.textContent = '검색 오류';
             updateTrendKeywords([]);
@@ -707,6 +746,10 @@ function timeAgo(publishedAt) {
         try {
             const response = await fetch(url);
             const data = await response.json();
+            if (data.error) {
+                console.error('채널 정보 호출 오류:', data.error);
+                return {};
+            }
             const map = {};
             if (data.items) {
                 data.items.forEach(ch => {
@@ -756,7 +799,8 @@ function timeAgo(publishedAt) {
             list = list.filter(v => {
                 const seconds = parseDurationSeconds(v.contentDetails?.duration || '');
                 if (currentDurationFilter === 'short') return seconds > 0 && seconds <= 60;
-                if (currentDurationFilter === 'long')  return seconds > 60;
+                if (currentDurationFilter === 'mid')   return seconds > 60 && seconds <= 600;  // 1~10분
+                if (currentDurationFilter === 'long')  return seconds > 600;                  // 10분 이상
                 return true;
             });
         }
@@ -778,14 +822,35 @@ function timeAgo(publishedAt) {
             });
         }
 
-        // 3) 조회수 정렬
+        // 3) 조회수/좋아요율/속도 정렬
         list.sort((a, b) => {
             const va = parseInt(a.statistics?.viewCount || '0', 10);
             const vb = parseInt(b.statistics?.viewCount || '0', 10);
-            if (currentSortMode === 'viewsAsc') {
-                return va - vb; // 오름차순
-            } else {
-                return vb - va; // 내림차순
+
+            const la = parseInt(a.statistics?.likeCount || '0', 10);
+            const lb = parseInt(b.statistics?.likeCount || '0', 10);
+
+            const ta = new Date(a.snippet.publishedAt);
+            const tb = new Date(b.snippet.publishedAt);
+            const ha = Math.max((Date.now() - ta.getTime()) / (1000 * 60 * 60), 1 / 60); // 최소 1분
+            const hb = Math.max((Date.now() - tb.getTime()) / (1000 * 60 * 60), 1 / 60);
+
+            const likeRateA = va > 0 ? la / va : 0;
+            const likeRateB = vb > 0 ? lb / vb : 0;
+
+            const speedA = va / ha;
+            const speedB = vb / hb;
+
+            switch (currentSortMode) {
+                case 'viewsAsc':
+                    return va - vb;
+                case 'likeRateDesc':
+                    return likeRateB - likeRateA;
+                case 'viewsPerHourDesc':
+                    return speedB - speedA;
+                case 'viewsDesc':
+                default:
+                    return vb - va;
             }
         });
 
@@ -830,11 +895,37 @@ function timeAgo(publishedAt) {
         const publishedAt = video.snippet.publishedAt;
         const timeAgoText = timeAgo(publishedAt);
 
+        // 조회 속도(시간당 조회수)
+        const publishedDate = new Date(publishedAt);
+        const hoursSinceUpload = Math.max((Date.now() - publishedDate.getTime()) / (1000 * 60 * 60), 1 / 60);
+        const viewVelocity = viewCount > 0 ? viewCount / hoursSinceUpload : 0;
+
+        // 좋아요율
+        const likeRate = viewCount > 0 ? (likeCount / viewCount) * 100 : 0;
+
+        // 길이
+        const durationSeconds = parseDurationSeconds(video.contentDetails?.duration || '');
+        const durationLabel = formatDurationLabel(durationSeconds);
+
         return `
             <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
                 <div class="video-card">
-                    <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">
+                    <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" style="position:relative;display:block;">
                         <img src="${thumbnailUrl}" class="card-img-top" alt="${title}">
+                        ${
+                            durationLabel
+                                ? `<span style="
+                                    position:absolute;
+                                    right:4px;
+                                    bottom:4px;
+                                    background:rgba(0,0,0,0.8);
+                                    color:#fff;
+                                    font-size:0.75rem;
+                                    padding:2px 4px;
+                                    border-radius:3px;
+                                ">${durationLabel}</span>`
+                                : ''
+                        }
                     </a>
                     <div class="card-body">
                         <h5 class="card-title">${title}</h5>
@@ -848,6 +939,9 @@ function timeAgo(publishedAt) {
                             <span class="stats-badge badge-comments">${formatNumber(commentCount)} 댓글</span>
                             <span class="stats-badge badge-subscribers">${formatNumber(subscriberCount)} 구독</span>
                         </div>
+                        <p class="card-text mt-1" style="font-size:0.75rem; color:#6c757d;">
+                            조회 속도: ${formatNumber(Math.round(viewVelocity))}회/시간 · 좋아요율: ${likeRate.toFixed(1)}%
+                        </p>
                     </div>
                 </div>
             </div>
@@ -957,6 +1051,16 @@ function timeAgo(publishedAt) {
             spanScore.className = 'trend-score-badge';
             spanScore.textContent = `score ${item.score.toFixed(1)}`;
 
+            // 🔥 키워드 클릭 시 자동 검색
+            spanKeyword.addEventListener('click', () => {
+                const searchInput = document.getElementById('searchInput');
+                const searchBtn = document.getElementById('searchBtn');
+                if (searchInput && searchBtn) {
+                    searchInput.value = item.word;
+                    searchBtn.click();
+                }
+            });
+
             li.appendChild(spanKeyword);
             li.appendChild(spanScore);
             listEl.appendChild(li);
@@ -995,9 +1099,25 @@ function timeAgo(publishedAt) {
         });
     });
 
-    // 언어 체크박스
+    // 언어 체크박스 → 라디오처럼 동작
     ['langKR', 'langEN', 'langJP'].forEach(id => {
-        document.getElementById(id).addEventListener('change', () => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('change', (e) => {
+            const target = e.target;
+            if (!target.checked) {
+                // 최소 하나는 항상 선택되도록: 해제하려 하면 다시 켬
+                target.checked = true;
+                return;
+            }
+            // 나머지 언어 체크 해제
+            ['langKR', 'langEN', 'langJP'].forEach(otherId => {
+                if (otherId !== id) {
+                    const otherEl = document.getElementById(otherId);
+                    if (otherEl) otherEl.checked = false;
+                }
+            });
+
             const categoryId = CATEGORIES[currentCategory];
             const keyword = document.getElementById('searchInput').value.trim();
             if (keyword) {
@@ -1023,7 +1143,7 @@ function timeAgo(publishedAt) {
         btn.addEventListener('click', function() {
             document.querySelector('.sort-button.active')?.classList.remove('active');
             this.classList.add('active');
-            currentSortMode = this.getAttribute('data-sort'); // viewsDesc | viewsAsc
+            currentSortMode = this.getAttribute('data-sort');
             updateVideoListAndStatus();
         });
     });
@@ -1115,4 +1235,3 @@ function timeAgo(publishedAt) {
 
 </body>
 </html>
-
