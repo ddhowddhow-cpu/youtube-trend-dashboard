@@ -213,6 +213,7 @@
     </div>
 
     <div class="text-center filter-bar">
+        <!-- 길이 필터 -->
         <div class="btn-group btn-group-sm" role="group" aria-label="Duration filter">
             <button class="btn btn-outline-dark duration-button active" data-duration="all">전체 길이</button>
             <button class="btn btn-outline-dark duration-button" data-duration="short">1분 이하</button>
@@ -220,11 +221,22 @@
             <button class="btn btn-outline-dark duration-button" data-duration="long">10분 이상</button>
         </div>
 
+        <!-- 정렬 필터 -->
         <div class="btn-group btn-group-sm" role="group" aria-label="View sort">
             <button class="btn btn-outline-secondary sort-button active" data-sort="viewsDesc">조회수 높은 순</button>
             <button class="btn btn-outline-secondary sort-button" data-sort="viewsAsc">조회수 낮은 순</button>
             <button class="btn btn-outline-secondary sort-button" data-sort="viewsPerHourDesc">조회 속도 순</button>
             <button class="btn btn-outline-secondary sort-button" data-sort="likeRateDesc">좋아요율 순</button>
+        </div>
+
+        <!-- ✅ 기간 필터 -->
+        <div class="btn-group btn-group-sm" role="group" aria-label="Time range filter">
+            <button class="btn btn-outline-secondary time-range-button active" data-range="r1">최근 48시간</button>
+            <button class="btn btn-outline-secondary time-range-button" data-range="r2">48시간~1주</button>
+            <button class="btn btn-outline-secondary time-range-button" data-range="r3">1주~1달</button>
+            <button class="btn btn-outline-secondary time-range-button" data-range="r4">1달~6개월</button>
+            <button class="btn btn-outline-secondary time-range-button" data-range="r5">6개월~1년</button>
+            <button class="btn btn-outline-secondary time-range-button" data-range="r6">1년 이상</button>
         </div>
     </div>
 
@@ -316,6 +328,8 @@
     let currentSortMode = 'viewsDesc';
     let currentTrendKeywords = [];
     let currentSubscriberRanges = new Set(['all']);
+    // ✅ 기간 필터 상태 (r1 ~ r6)
+    let currentTimeRange = 'r1';
 
     const STOPWORDS_COMMON = new Set([
         'official','video','music','mv','the','and','for','with','from','feat','live','of','in','on',
@@ -399,6 +413,70 @@
         if (en) return { regionCode: 'US', relevanceLanguage: 'en' };
         if (jp) return { regionCode: 'JP', relevanceLanguage: 'ja' };
         return { regionCode: 'KR', relevanceLanguage: 'ko' };
+    }
+
+    // ✅ 기간 범위 계산: after, before, label 리턴
+    function getTimeRangeConfig() {
+        const now = new Date();
+        const hour = 60 * 60 * 1000;
+        const day = 24 * hour;
+        switch (currentTimeRange) {
+            case 'r1': // 최근 48시간
+                return {
+                    after: new Date(now.getTime() - 48 * hour),
+                    before: null,
+                    label: '최근 48시간 이내'
+                };
+            case 'r2': // 48시간 ~ 1주
+                return {
+                    after: new Date(now.getTime() - 7 * day),
+                    before: new Date(now.getTime() - 48 * hour),
+                    label: '48시간 ~ 1주일 전'
+                };
+            case 'r3': // 1주 ~ 1달
+                return {
+                    after: new Date(now.getTime() - 30 * day),
+                    before: new Date(now.getTime() - 7 * day),
+                    label: '1주일 ~ 1달 전'
+                };
+            case 'r4': // 1달 ~ 6개월
+                return {
+                    after: new Date(now.getTime() - 180 * day),
+                    before: new Date(now.getTime() - 30 * day),
+                    label: '1달 ~ 6개월 전'
+                };
+            case 'r5': // 6개월 ~ 1년
+                return {
+                    after: new Date(now.getTime() - 365 * day),
+                    before: new Date(now.getTime() - 180 * day),
+                    label: '6개월 ~ 1년 전'
+                };
+            case 'r6': // 1년 이상 (1년 이전 업로드)
+                return {
+                    after: null,
+                    before: new Date(now.getTime() - 365 * day),
+                    label: '1년 이상 (1년 이전 업로드)'
+                };
+            default:
+                return {
+                    after: new Date(now.getTime() - 48 * hour),
+                    before: null,
+                    label: '최근 48시간 이내'
+                };
+        }
+    }
+
+    // ✅ 영상 리스트를 현재 기간 기준으로 필터
+    function filterVideosByTimeRange(videos) {
+        const { after, before } = getTimeRangeConfig();
+        if (!after && !before) return videos;
+
+        return videos.filter(v => {
+            const publishedAt = new Date(v.snippet.publishedAt);
+            if (after && publishedAt < after) return false;
+            if (before && publishedAt > before) return false;
+            return true;
+        });
     }
 
     function loadApiKey() {
@@ -534,7 +612,7 @@
                 apiStatusP.textContent =
                     '표시할 영상이 없습니다. (이 카테고리/지역에서 인기 영상이 없거나 API 쿼터 제한일 수 있습니다)';
                 document.getElementById('time-info').textContent =
-                    '기준: 최근 48시간 이내 업로드된 인기 영상이 없을 수 있습니다.';
+                    '기준: 선택한 기간에 해당하는 인기 영상이 없을 수 있습니다.';
                 apiConnBadge.className = 'badge bg-warning text-dark';
                 apiConnBadge.textContent = '데이터 없음';
                 currentSearchKeyword = '';
@@ -554,25 +632,27 @@
                 return vb - va;
             });
 
-            const now = new Date();
-            const hours48Ago = new Date(now.getTime() - 48 * 60 * 60 * 1000);
-            let within48 = combinedItems.filter(v => {
-                const publishedAt = v.snippet.publishedAt;
-                return new Date(publishedAt) >= hours48Ago;
-            });
+            // ✅ 선택한 기간 기준으로 필터
+            let withinRange = filterVideosByTimeRange(combinedItems);
+            const timeInfoEl = document.getElementById('time-info');
+            const { label } = getTimeRangeConfig();
 
-            if (within48.length === 0) {
-                within48 = combinedItems;
-                document.getElementById('time-info').textContent =
-                    '⚠️ 최근 48시간 업로드 영상이 적어 전체 인기 영상 목록을 표시합니다.';
+            if (withinRange.length === 0) {
+                withinRange = combinedItems;
+                if (timeInfoEl) {
+                    timeInfoEl.textContent =
+                        '⚠️ 선택한 기간에 해당하는 인기 영상이 거의 없어 전체 인기 영상 목록을 표시합니다.';
+                }
             } else {
-                document.getElementById('time-info').textContent =
-                    '기준: 최근 48시간 이내 업로드된 인기 영상만 표시 중입니다.';
+                if (timeInfoEl) {
+                    timeInfoEl.textContent =
+                        `기준: ${label} 업로드된 인기 영상만 표시 중입니다.`;
+                }
             }
 
-            currentBaseVideos = within48;
+            currentBaseVideos = withinRange;
             currentSearchKeyword = '';
-            const channelStatsMap = await fetchChannelStats(within48);
+            const channelStatsMap = await fetchChannelStats(withinRange);
             currentChannelStatsMap = channelStatsMap;
 
             updateVideoListAndStatus();
@@ -665,7 +745,7 @@
             currentChannelStatsMap = channelStatsMap;
 
             document.getElementById('time-info').textContent =
-                '기준: 현재 라이브 방송 중인 영상(조회수 높은 순)을 표시합니다.';
+                '기준: 현재 라이브 방송 중인 영상(조회수 높은 순)을 표시합니다. (기간 필터는 라이브에는 적용되지 않습니다)';
 
             updateVideoListAndStatus();
             buildAndRenderTrendKeywords();
@@ -710,9 +790,7 @@
         updateTrendRegionInfo();
 
         try {
-            const now = new Date();
-            const hours48Ago = new Date(now.getTime() - 48 * 60 * 60 * 1000);
-            const publishedAfter = hours48Ago.toISOString();
+            const { after, before, label } = getTimeRangeConfig();
 
             const categoryId = CATEGORIES[currentCategory] || '';
             let searchBase =
@@ -720,13 +798,19 @@
                 `&regionCode=${regionCode}&q=${encodeURIComponent(keyword)}&key=${API_KEY}`;
             if (categoryId && currentCategory !== 'Live') searchBase += `&videoCategoryId=${categoryId}`;
 
-            let searchUrl = `${searchBase}&publishedAfter=${publishedAfter}`;
+            // ✅ 기간 조건을 search API에 반영
+            let timeQuery = '';
+            if (after) timeQuery += `&publishedAfter=${after.toISOString()}`;
+            if (before) timeQuery += `&publishedBefore=${before.toISOString()}`;
+
+            let searchUrl = searchBase + timeQuery;
             let response = await fetch(searchUrl);
             let searchData = await response.json();
             if (searchData.error) throw { ytError: searchData.error };
             let items = searchData.items || [];
 
-            if (items.length === 0) {
+            // 기간 기준으로 결과가 전혀 없으면 전체 기간으로 한 번 더 시도
+            if (items.length === 0 && timeQuery) {
                 searchUrl = searchBase;
                 response = await fetch(searchUrl);
                 searchData = await response.json();
@@ -764,24 +848,26 @@
                 return vb - va;
             });
 
-            const hours48Ago2 = new Date(now.getTime() - 48 * 60 * 60 * 1000);
-            let within48 = videoItems.filter(v => {
-                const publishedAt = v.snippet.publishedAt;
-                return new Date(publishedAt) >= hours48Ago2;
-            });
+            // ✅ 선택한 기간으로 다시 필터
+            let withinRange = filterVideosByTimeRange(videoItems);
+            const timeInfoEl = document.getElementById('time-info');
 
-            if (within48.length === 0) {
-                within48 = videoItems;
-                document.getElementById('time-info').textContent =
-                    '⚠️ 최근 48시간 내 업로드된 영상이 적어 전체 검색 결과를 표시합니다.';
+            if (withinRange.length === 0) {
+                withinRange = videoItems;
+                if (timeInfoEl) {
+                    timeInfoEl.textContent =
+                        '⚠️ 선택한 기간에 해당하는 검색 결과가 적어 전체 검색 결과를 표시합니다.';
+                }
             } else {
-                document.getElementById('time-info').textContent =
-                    '기준: 최근 48시간 이내 업로드된 인기 영상만 표시 중입니다.';
+                if (timeInfoEl) {
+                    timeInfoEl.textContent =
+                        `기준: ${label} 업로드된 영상 중 "${keyword}" 관련 인기 영상만 표시 중입니다.`;
+                }
             }
 
-            currentBaseVideos = within48;
+            currentBaseVideos = withinRange;
             currentSearchKeyword = keyword;
-            const channelStatsMap = await fetchChannelStats(within48);
+            const channelStatsMap = await fetchChannelStats(withinRange);
             currentChannelStatsMap = channelStatsMap;
 
             updateVideoListAndStatus();
@@ -1051,7 +1137,7 @@
         const el = document.getElementById('trend-updated-time');
         if (!el) return;
         const now = new Date();
-        el.textContent = `기준: 현재 표시 중인 인기 영상(최근 48시간 기준)에서 자동 추출 · 업데이트 ${now.toLocaleTimeString()}`;
+        el.textContent = `기준: 현재 표시 중인 인기 영상(선택한 기간 기준)에서 자동 추출 · 업데이트 ${now.toLocaleTimeString()}`;
     }
 
     function updateTrendKeywords(keywordEntries) {
@@ -1154,6 +1240,24 @@
             this.classList.add('active');
             currentSortMode = this.getAttribute('data-sort');
             updateVideoListAndStatus();
+        });
+    });
+
+    // ✅ 기간 필터 버튼
+    document.querySelectorAll('.time-range-button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelector('.time-range-button.active')?.classList.remove('active');
+            this.classList.add('active');
+            currentTimeRange = this.getAttribute('data-range');
+
+            const categoryId = CATEGORIES[currentCategory];
+            if (currentSearchKeyword) {
+                searchVideosByKeyword(currentSearchKeyword);
+            } else if (currentCategory === 'Live') {
+                fetchLiveVideos();
+            } else {
+                fetchPopularVideos(categoryId);
+            }
         });
     });
 
