@@ -151,6 +151,20 @@
             border: 1px solid #e9ecef;
             white-space: pre-line;
         }
+
+        /* 즐겨찾기 영역 살짝 스타일 */
+        .favorite-section {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-top: 10px;
+            border: 1px solid #e9ecef;
+        }
+        .favorite-section-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
     </style>
 </head>
 <body>
@@ -269,6 +283,29 @@
             <label class="form-check-label" for="subFilter50000_plus">5만 이상</label>
         </div>
     </div>
+
+    <!-- ⭐ 즐겨찾기 영역 추가 -->
+    <div class="container mt-2">
+        <div class="favorite-section">
+            <div class="favorite-section-title">⭐ 나만의 즐겨찾기 키워드 그룹</div>
+            <div class="row g-1 align-items-center">
+                <div class="col-md-3 col-12">
+                    <input id="favGroupName" type="text" class="form-control form-control-sm"
+                           placeholder="대태그 이름 (예: 여캠)">
+                </div>
+                <div class="col-md-7 col-12">
+                    <input id="favKeywords" type="text" class="form-control form-control-sm"
+                           placeholder="소태그(키워드) 쉼표/띄어쓰기로 구분 (예: 태연, 탁재훈)">
+                </div>
+                <div class="col-md-2 col-12 d-grid">
+                    <button id="addFavBtn" class="btn btn-sm btn-outline-warning">추가/업데이트</button>
+                </div>
+            </div>
+            <div id="favorite-buttons" class="mt-2">
+                <small class="text-muted">등록된 즐겨찾기가 없습니다.</small>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="container main-content">
@@ -325,6 +362,9 @@
     let currentTrendKeywords = [];
     let currentSubscriberRanges = new Set(['all']);
     let currentTimeRange = 'r1';
+
+    // ⭐ 즐겨찾기 그룹 (대태그 → [소태그...])
+    let favoriteGroups = {};
 
     const STOPWORDS_COMMON = new Set([
         'official','video','music','mv','the','and','for','with','from','feat','live','of','in','on',
@@ -468,7 +508,7 @@
     function saveApiKey() {
         const apiKeyInput = document.getElementById('apiKeyInput');
         const newKey = apiKeyInput.value.trim();
-        if (!newKey) { alert('API 키를 입력해 주세요.'); return; }
+               if (!newKey) { alert('API 키를 입력해 주세요.'); return; }
         API_KEY = newKey;
         try { window.localStorage.setItem('ytTrendApiKey', newKey); } catch(e) {}
         loadApiKey();
@@ -1129,6 +1169,86 @@
         updateTrendKeywords(entries);
     }
 
+    // ⭐ 즐겨찾기 관련 함수들
+    function loadFavorites() {
+        try {
+            const raw = window.localStorage.getItem('ytTrendFavorites');
+            if (raw) {
+                favoriteGroups = JSON.parse(raw);
+            } else {
+                favoriteGroups = {};
+            }
+        } catch (e) {
+            console.warn('즐겨찾기 로드 실패:', e);
+            favoriteGroups = {};
+        }
+        renderFavoriteButtons();
+    }
+
+    function saveFavorites() {
+        try {
+            window.localStorage.setItem('ytTrendFavorites', JSON.stringify(favoriteGroups));
+        } catch (e) {
+            console.warn('즐겨찾기 저장 실패:', e);
+        }
+    }
+
+    function renderFavoriteButtons() {
+        const wrapper = document.getElementById('favorite-buttons');
+        if (!wrapper) return;
+        wrapper.innerHTML = '';
+
+        const names = Object.keys(favoriteGroups);
+        if (!names.length) {
+            wrapper.innerHTML = '<small class="text-muted">등록된 즐겨찾기가 없습니다.</small>';
+            return;
+        }
+
+        names.forEach(name => {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'd-inline-flex align-items-center me-2 mb-1';
+
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-sm btn-outline-warning me-1 fav-group-btn';
+            btn.textContent = `⭐ ${name}`;
+            btn.setAttribute('data-group', name);
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'btn btn-sm btn-outline-secondary fav-group-del';
+            delBtn.textContent = '삭제';
+            delBtn.setAttribute('data-group', name);
+
+            groupDiv.appendChild(btn);
+            groupDiv.appendChild(delBtn);
+            wrapper.appendChild(groupDiv);
+        });
+
+        // 클릭 이벤트(검색)
+        wrapper.querySelectorAll('.fav-group-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const name = btn.getAttribute('data-group');
+                const keywords = favoriteGroups[name] || [];
+                if (!keywords.length) return;
+                const combined = keywords.join(' ');
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) searchInput.value = combined;
+                searchVideosByKeyword(combined);
+            });
+        });
+
+        // 삭제 이벤트
+        wrapper.querySelectorAll('.fav-group-del').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const name = btn.getAttribute('data-group');
+                if (favoriteGroups[name]) {
+                    delete favoriteGroups[name];
+                    saveFavorites();
+                    renderFavoriteButtons();
+                }
+            });
+        });
+    }
+
     // 카테고리 버튼
     document.querySelectorAll('.category-button').forEach(button => {
         button.addEventListener('click', function() {
@@ -1258,10 +1378,42 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         loadApiKey();
+        loadFavorites(); // ⭐ 즐겨찾기 로드
         document.getElementById('saveApiKeyBtn').addEventListener('click', saveApiKey);
         document.getElementById('clearApiKeyBtn').addEventListener('click', clearApiKey);
         updateTrendRegionInfo();
         fetchPopularVideos(CATEGORIES[currentCategory]);
+
+        // 즐겨찾기 추가 버튼 이벤트
+        const addFavBtn = document.getElementById('addFavBtn');
+        if (addFavBtn) {
+            addFavBtn.addEventListener('click', () => {
+                const nameInput = document.getElementById('favGroupName');
+                const kwInput = document.getElementById('favKeywords');
+                if (!nameInput || !kwInput) return;
+
+                const name = nameInput.value.trim();
+                const kwStr = kwInput.value.trim();
+                if (!name || !kwStr) {
+                    alert('대태그 이름과 소태그 키워드를 모두 입력해 주세요.');
+                    return;
+                }
+                const keywords = kwStr
+                    .split(/[,\s]+/)
+                    .map(k => k.trim())
+                    .filter(k => k.length > 0);
+
+                if (!keywords.length) {
+                    alert('소태그 키워드를 하나 이상 입력해 주세요.');
+                    return;
+                }
+
+                favoriteGroups[name] = keywords;
+                saveFavorites();
+                renderFavoriteButtons();
+                alert(`"${name}" 즐겨찾기가 저장되었습니다.`);
+            });
+        }
 
         // 30분마다 자동 새로고침
         setInterval(() => {
