@@ -145,7 +145,6 @@
             color: #495057;
         }
 
-        /* (예전 인기 댓글 박스 스타일 - 지금은 사용 안함이지만 남겨둬도 무방) */
         .top-comment-box {
             background-color: #f8f9fa;
             border-radius: 4px;
@@ -153,6 +152,15 @@
             font-size: 0.75rem;
             border: 1px solid #e9ecef;
             white-space: pre-line;
+        }
+
+        /* 프리셋 영역 */
+        .preset-section-title {
+            font-weight: 700;
+        }
+        .preset-group {
+            margin-top: 4px;
+            margin-bottom: 6px;
         }
     </style>
 </head>
@@ -177,7 +185,7 @@
                 </div>
                 <div class="form-check form-check-inline">
                     <input class="form-check-input" type="checkbox" id="langEN">
-                    <label class="form-check-label" for="langEN">🇺🇸 미국</label>
+                    <label class="form-check-label" for="langEN">🇺🇸 미국(영어권)</label>
                 </div>
                 <div class="form-check form-check-inline">
                     <input class="form-check-input" type="checkbox" id="langJP">
@@ -208,7 +216,7 @@
         <button class="btn btn-outline-secondary category-button" data-category="Education">📚 교육/지식</button>
         <button class="btn btn-outline-secondary category-button" data-category="IT">💻 IT/테크</button>
         <button class="btn btn-outline-secondary category-button" data-category="News">📰 뉴스/정치</button>
-        <!-- ✅ 라이브 탭 -->
+        <!-- 라이브 탭 -->
         <button class="btn btn-outline-secondary category-button" data-category="Live">📡 라이브</button>
     </div>
 
@@ -229,7 +237,7 @@
             <button class="btn btn-outline-secondary sort-button" data-sort="likeRateDesc">좋아요율 순</button>
         </div>
 
-        <!-- ✅ 기간 필터 -->
+        <!-- 기간 필터 -->
         <div class="btn-group btn-group-sm" role="group" aria-label="Time range filter">
             <button class="btn btn-outline-secondary time-range-button active" data-range="r1">최근 48시간</button>
             <button class="btn btn-outline-secondary time-range-button" data-range="r2">48시간~1주</button>
@@ -273,6 +281,72 @@
             <label class="form-check-label" for="subFilter50000_plus">5만 이상</label>
         </div>
     </div>
+
+    <!-- 🔥 프리셋 섹션들 -->
+    <div class="text-center mt-3">
+        <h5 class="text-danger mb-2 preset-section-title">🎯 프리셋 검색 (버튼만 눌러도 자동 검색)</h5>
+
+        <!-- 해외 짜집기 -->
+        <div class="preset-group">
+            <span class="text-muted me-2">🌎 해외 짜집기:</span>
+            <div class="btn-group btn-group-sm mb-1">
+                <button class="btn btn-outline-primary preset-button" data-preset="ov_us_funny">🇺🇸 미드/예능 짜집기</button>
+                <button class="btn btn-outline-primary preset-button" data-preset="ov_us_tiktok">🇺🇸 틱톡 밈 짜집기</button>
+                <button class="btn btn-outline-primary preset-button" data-preset="ov_eu_football">⚽ 유럽 축구 하이라이트</button>
+                <button class="btn btn-outline-primary preset-button" data-preset="ov_jp_variety">🇯🇵 일본 예능 짜집기</button>
+            </div>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-primary preset-button" data-preset="ov_reaction">🌐 해외 반응/리액션</button>
+                <button class="btn btn-outline-primary preset-button" data-preset="ov_fails">💥 사고/실수/스턴트</button>
+                <button class="btn btn-outline-primary preset-button" data-preset="ov_wholesome">💛 감동/힐링 순간</button>
+                <button class="btn btn-outline-primary preset-button" data-preset="ov_streamer">🎮 해외 스트리머 하이라이트</button>
+            </div>
+        </div>
+
+        <!-- 국내 짜집기 -->
+        <div class="preset-group">
+            <span class="text-muted me-2">🇰🇷 국내 짜집기:</span>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary preset-button" data-preset="kr_variety_funny">예능 웃긴 장면</button>
+                <button class="btn btn-outline-secondary preset-button" data-preset="kr_tv_clip">드라마/예능 클립</button>
+                <button class="btn btn-outline-secondary preset-button" data-preset="kr_tiktok">국내 틱톡/쇼츠 짜집기</button>
+                <button class="btn btn-outline-secondary preset-button" data-preset="kr_reaction">한국인 리액션 모음</button>
+            </div>
+        </div>
+
+        <!-- 드라마/로맨스 -->
+        <div class="preset-group">
+            <span class="text-muted me-2">🎭 드라마/로맨스 클립:</span>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary preset-button" data-preset="drama_clip">드라마 명장면 모음</button>
+                <button class="btn btn-outline-secondary preset-button" data-preset="drama_romance">로맨스 설레는 장면</button>
+                <button class="btn btn-outline-secondary preset-button" data-preset="drama_makjang">막장 드라마 레전드</button>
+                <button class="btn btn-outline-secondary preset-button" data-preset="drama_kiss">키스/고백 장면 모음</button>
+            </div>
+        </div>
+
+        <!-- 뉴스/정치/이슈 -->
+        <div class="preset-group">
+            <span class="text-muted me-2">📰 뉴스/정치/이슈:</span>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary preset-button" data-preset="news_issue">핵심 이슈 짜집기</button>
+                <button class="btn btn-outline-secondary preset-button" data-preset="news_debate">토론/인터뷰 하이라이트</button>
+                <button class="btn btn-outline-secondary preset-button" data-preset="news_world">해외 뉴스 모음</button>
+                <button class="btn btn-outline-secondary preset-button" data-preset="news_economy">경제/주식 이슈 정리</button>
+            </div>
+        </div>
+
+        <!-- AI 설명/해설/정보 -->
+        <div class="preset-group mb-2">
+            <span class="text-muted me-2">🤖 AI/해설/정보:</span>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary preset-button" data-preset="ai_explain">AI 음성 해설 모음</button>
+                <button class="btn btn-outline-secondary preset-button" data-preset="ai_history">역사/사건 요약 해설</button>
+                <button class="btn btn-outline-secondary preset-button" data-preset="ai_docu">다큐멘터리 요약 클립</button>
+                <button class="btn btn-outline-secondary preset-button" data-preset="ai_news_explain">뉴스/시사 요약 해설</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="container main-content">
@@ -291,7 +365,7 @@
                     지역: KR 기준
                 </p>
                 <p class="text-muted trend-meta mb-2" id="trend-updated-time">
-                    기준: 현재 표시 중인 인기 영상(최근 48시간 기준)에서 자동 추출
+                    기준: 현재 표시 중인 인기 영상(선택한 기간 기준)에서 자동 추출
                 </p>
                 <ol id="trend-keyword-list" class="trend-list">
                     <li><span class="trend-keyword">데이터 로딩 중...</span></li>
@@ -316,7 +390,7 @@
         'Education': '27',
         'IT': '28',
         'News': '25',
-        'Live': 'LIVE' // 라이브는 별도 함수로 처리
+        'Live': 'LIVE'
     };
     const ALL_CATEGORY_IDS = ['10','24','17','22','27','28','25'];
 
@@ -328,8 +402,116 @@
     let currentSortMode = 'viewsDesc';
     let currentTrendKeywords = [];
     let currentSubscriberRanges = new Set(['all']);
-    // ✅ 기간 필터 상태 (r1 ~ r6)
-    let currentTimeRange = 'r1';
+    let currentTimeRange = 'r1'; // 기간 필터 상태
+
+    // 🎯 프리셋 검색 데이터 (해외+국내+드라마+뉴스+AI)
+    const SEARCH_PRESETS = {
+        // 🌎 해외 짜집기
+        ov_us_funny: {
+            keyword: 'funny moments compilation best funny clips 2024',
+            langCheckboxId: 'langEN'
+        },
+        ov_us_tiktok: {
+            keyword: 'tiktok memes compilation viral tiktok funny',
+            langCheckboxId: 'langEN'
+        },
+        ov_eu_football: {
+            keyword: 'football highlights compilation best goals funny football fails',
+            langCheckboxId: 'langEN'
+        },
+        ov_jp_variety: {
+            keyword: 'バラエティ 切り抜き 日本 バラエティ おもしろい まとめ',
+            langCheckboxId: 'langJP'
+        },
+        ov_reaction: {
+            keyword: 'reaction compilation best reaction mashup viral reactions',
+            langCheckboxId: 'langEN'
+        },
+        ov_fails: {
+            keyword: 'fails compilation epic fails 2024 unbelievable moments',
+            langCheckboxId: 'langEN'
+        },
+        ov_wholesome: {
+            keyword: 'wholesome moments compilation heartwarming clips',
+            langCheckboxId: 'langEN'
+        },
+        ov_streamer: {
+            keyword: 'streamer funny moments twitch clips best gaming highlights',
+            langCheckboxId: 'langEN'
+        },
+
+        // 🇰🇷 국내 짜집기
+        kr_variety_funny: {
+            keyword: '예능 웃긴 장면 모음 레전드 하이라이트',
+            langCheckboxId: 'langKR'
+        },
+        kr_tv_clip: {
+            keyword: '드라마 예능 클립 모음 하이라이트',
+            langCheckboxId: 'langKR'
+        },
+        kr_tiktok: {
+            keyword: '틱톡 리얼 쇼츠 모음 웃긴 영상',
+            langCheckboxId: 'langKR'
+        },
+        kr_reaction: {
+            keyword: '한국인 리액션 모음 해외 반응',
+            langCheckboxId: 'langKR'
+        },
+
+        // 🎭 드라마/로맨스
+        drama_clip: {
+            keyword: '드라마 명장면 모음 레전드 장면',
+            langCheckboxId: 'langKR'
+        },
+        drama_romance: {
+            keyword: '로맨스 드라마 설레는 장면 모음',
+            langCheckboxId: 'langKR'
+        },
+        drama_makjang: {
+            keyword: '막장 드라마 레전드 모음 말도안되는 전개',
+            langCheckboxId: 'langKR'
+        },
+        drama_kiss: {
+            keyword: '드라마 키스신 고백 장면 모음',
+            langCheckboxId: 'langKR'
+        },
+
+        // 📰 뉴스/정치/이슈
+        news_issue: {
+            keyword: '뉴스 이슈 정리 모음 하이라이트',
+            langCheckboxId: 'langKR'
+        },
+        news_debate: {
+            keyword: '토론 인터뷰 하이라이트 모음',
+            langCheckboxId: 'langKR'
+        },
+        news_world: {
+            keyword: 'world news highlights compilation',
+            langCheckboxId: 'langEN'
+        },
+        news_economy: {
+            keyword: '경제 뉴스 주식 부동산 이슈 정리',
+            langCheckboxId: 'langKR'
+        },
+
+        // 🤖 AI/해설/정보
+        ai_explain: {
+            keyword: 'AI 음성 해설 요약 영상 모음',
+            langCheckboxId: 'langKR'
+        },
+        ai_history: {
+            keyword: '역사 사건 요약 해설 모음',
+            langCheckboxId: 'langKR'
+        },
+        ai_docu: {
+            keyword: '다큐멘터리 요약 정리 클립',
+            langCheckboxId: 'langKR'
+        },
+        ai_news_explain: {
+            keyword: '뉴스 시사 요약 해설 모음',
+            langCheckboxId: 'langKR'
+        }
+    };
 
     const STOPWORDS_COMMON = new Set([
         'official','video','music','mv','the','and','for','with','from','feat','live','of','in','on',
@@ -349,11 +531,9 @@
         'くん','公式','映像'
     ]);
 
-    // 숫자 → 한국식 단위 표기 (억 / 만 / 천)
     function formatNumberKR(num) {
         if (num == null || isNaN(num)) return '0';
         num = Number(num);
-
         if (num >= 100000000) {
             const eok = num / 100000000;
             const str = (eok >= 10 ? eok.toFixed(0) : eok.toFixed(1)).replace(/\.0$/, '');
@@ -369,10 +549,7 @@
         }
         return num.toString();
     }
-
-    function formatNumber(num) {
-        return formatNumberKR(num);
-    }
+    function formatNumber(num) { return formatNumberKR(num); }
 
     function timeAgo(publishedAt) {
         const now = new Date();
@@ -415,62 +592,31 @@
         return { regionCode: 'KR', relevanceLanguage: 'ko' };
     }
 
-    // ✅ 기간 범위 계산: after, before, label 리턴
+    // 기간 설정
     function getTimeRangeConfig() {
         const now = new Date();
         const hour = 60 * 60 * 1000;
         const day = 24 * hour;
         switch (currentTimeRange) {
-            case 'r1': // 최근 48시간
-                return {
-                    after: new Date(now.getTime() - 48 * hour),
-                    before: null,
-                    label: '최근 48시간 이내'
-                };
-            case 'r2': // 48시간 ~ 1주
-                return {
-                    after: new Date(now.getTime() - 7 * day),
-                    before: new Date(now.getTime() - 48 * hour),
-                    label: '48시간 ~ 1주일 전'
-                };
-            case 'r3': // 1주 ~ 1달
-                return {
-                    after: new Date(now.getTime() - 30 * day),
-                    before: new Date(now.getTime() - 7 * day),
-                    label: '1주일 ~ 1달 전'
-                };
-            case 'r4': // 1달 ~ 6개월
-                return {
-                    after: new Date(now.getTime() - 180 * day),
-                    before: new Date(now.getTime() - 30 * day),
-                    label: '1달 ~ 6개월 전'
-                };
-            case 'r5': // 6개월 ~ 1년
-                return {
-                    after: new Date(now.getTime() - 365 * day),
-                    before: new Date(now.getTime() - 180 * day),
-                    label: '6개월 ~ 1년 전'
-                };
-            case 'r6': // 1년 이상 (1년 이전 업로드)
-                return {
-                    after: null,
-                    before: new Date(now.getTime() - 365 * day),
-                    label: '1년 이상 (1년 이전 업로드)'
-                };
+            case 'r1':
+                return { after: new Date(now.getTime() - 48 * hour), before: null, label: '최근 48시간 이내' };
+            case 'r2':
+                return { after: new Date(now.getTime() - 7 * day), before: new Date(now.getTime() - 48 * hour), label: '48시간 ~ 1주일 전' };
+            case 'r3':
+                return { after: new Date(now.getTime() - 30 * day), before: new Date(now.getTime() - 7 * day), label: '1주일 ~ 1달 전' };
+            case 'r4':
+                return { after: new Date(now.getTime() - 180 * day), before: new Date(now.getTime() - 30 * day), label: '1달 ~ 6개월 전' };
+            case 'r5':
+                return { after: new Date(now.getTime() - 365 * day), before: new Date(now.getTime() - 180 * day), label: '6개월 ~ 1년 전' };
+            case 'r6':
+                return { after: null, before: new Date(now.getTime() - 365 * day), label: '1년 이상 (1년 이전 업로드)' };
             default:
-                return {
-                    after: new Date(now.getTime() - 48 * hour),
-                    before: null,
-                    label: '최근 48시간 이내'
-                };
+                return { after: new Date(now.getTime() - 48 * hour), before: null, label: '최근 48시간 이내' };
         }
     }
-
-    // ✅ 영상 리스트를 현재 기간 기준으로 필터
     function filterVideosByTimeRange(videos) {
         const { after, before } = getTimeRangeConfig();
         if (!after && !before) return videos;
-
         return videos.filter(v => {
             const publishedAt = new Date(v.snippet.publishedAt);
             if (after && publishedAt < after) return false;
@@ -579,11 +725,9 @@
             let allItems = [];
 
             if (!categoryId) {
-                // 전체 탭: 카테고리별 에러는 무시하고 성공한 것만 합치기
                 const results = await Promise.allSettled(
                     ALL_CATEGORY_IDS.map(id => fetchMostPopularForCategory(regionCode, id))
                 );
-
                 let firstError = null;
                 results.forEach(r => {
                     if (r.status === 'fulfilled') {
@@ -595,10 +739,7 @@
                         console.warn('카테고리별 호출 실패(무시):', r.reason);
                     }
                 });
-
-                if (allItems.length === 0 && firstError) {
-                    throw firstError;
-                }
+                if (allItems.length === 0 && firstError) throw firstError;
             } else {
                 const arr = await fetchMostPopularForCategory(regionCode, categoryId);
                 allItems = allItems.concat(arr);
@@ -632,7 +773,6 @@
                 return vb - va;
             });
 
-            // ✅ 선택한 기간 기준으로 필터
             let withinRange = filterVideosByTimeRange(combinedItems);
             const timeInfoEl = document.getElementById('time-info');
             const { label } = getTimeRangeConfig();
@@ -673,7 +813,6 @@
         }
     }
 
-    // ✅ 라이브 방송 전용
     async function fetchLiveVideos() {
         const videoListDiv = document.getElementById('video-list');
         const apiStatusP = document.getElementById('api-status');
@@ -798,7 +937,6 @@
                 `&regionCode=${regionCode}&q=${encodeURIComponent(keyword)}&key=${API_KEY}`;
             if (categoryId && currentCategory !== 'Live') searchBase += `&videoCategoryId=${categoryId}`;
 
-            // ✅ 기간 조건을 search API에 반영
             let timeQuery = '';
             if (after) timeQuery += `&publishedAfter=${after.toISOString()}`;
             if (before) timeQuery += `&publishedBefore=${before.toISOString()}`;
@@ -809,7 +947,6 @@
             if (searchData.error) throw { ytError: searchData.error };
             let items = searchData.items || [];
 
-            // 기간 기준으로 결과가 전혀 없으면 전체 기간으로 한 번 더 시도
             if (items.length === 0 && timeQuery) {
                 searchUrl = searchBase;
                 response = await fetch(searchUrl);
@@ -848,7 +985,6 @@
                 return vb - va;
             });
 
-            // ✅ 선택한 기간으로 다시 필터
             let withinRange = filterVideosByTimeRange(videoItems);
             const timeInfoEl = document.getElementById('time-info');
 
@@ -888,7 +1024,6 @@
         }
     }
 
-    // ✅ 채널 통계: 50개씩 분할 호출 (All에서 구독자 0 문제 해결)
     async function fetchChannelStats(videoItems) {
         const channelIds = Array.from(
             new Set(
@@ -1008,7 +1143,6 @@
         });
     }
 
-    // ✅ 인기댓글 → 댓글 갯수 + 댓글비율 뱃지로 표시
     function createVideoCard(video, channelStatsMap) {
         const title = video.snippet.title;
         const channelTitle = video.snippet.channelTitle;
@@ -1243,7 +1377,7 @@
         });
     });
 
-    // ✅ 기간 필터 버튼
+    // 기간 필터 버튼
     document.querySelectorAll('.time-range-button').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelector('.time-range-button.active')?.classList.remove('active');
@@ -1291,6 +1425,35 @@
                 }
             }
             updateVideoListAndStatus();
+        });
+    });
+
+    // 🎯 프리셋 버튼 핸들러
+    document.querySelectorAll('.preset-button').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const key = this.getAttribute('data-preset');
+            const preset = SEARCH_PRESETS[key];
+            if (!preset) return;
+
+            // 언어 체크박스 설정
+            ['langKR', 'langEN', 'langJP'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.checked = (id === preset.langCheckboxId);
+            });
+
+            // 카테고리는 전체로
+            currentCategory = 'All';
+            document.querySelectorAll('.category-button').forEach(b => b.classList.remove('active'));
+            document.querySelector('.category-button[data-category="All"]')?.classList.add('active');
+            document.getElementById('category-title').textContent = '📌 전체 영상 (프리셋 검색)';
+
+            // 검색창에 키워드 표시
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = preset.keyword;
+
+            currentSearchKeyword = '';
+            searchVideosByKeyword(preset.keyword);
         });
     });
 
