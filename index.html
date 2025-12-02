@@ -65,7 +65,6 @@
         .badge-likes { background-color: #ffd700; color: #212529; }
         .badge-comments { background-color: #6a5acd; color: white; }
 
-        /* 조회속도 / 좋아요율 색상 */
         .badge-velocity {
             background-color: #20c997;
             color: white;
@@ -74,7 +73,6 @@
             background-color: #ff6f61;
             color: white;
         }
-        /* 댓글 비율 색상 */
         .badge-commentRate {
             background-color: #4dabf7;
             color: white;
@@ -153,15 +151,6 @@
             border: 1px solid #e9ecef;
             white-space: pre-line;
         }
-
-        /* 프리셋 영역 */
-        .preset-section-title {
-            font-weight: 700;
-        }
-        .preset-group {
-            margin-top: 4px;
-            margin-bottom: 6px;
-        }
     </style>
 </head>
 <body>
@@ -170,7 +159,7 @@
     <div class="row align-items-center">
         <div class="col-md-3 text-center">
             <h3>유투브 트렌드 찾기 제작:자돈</h3>
-            <p class="text-muted">최근 48시간 기준 인기 영상 분석</p>
+            <p class="text-muted">기간별 인기 영상 분석</p>
         </div>
         <div class="col-md-6">
             <div class="input-group">
@@ -216,7 +205,6 @@
         <button class="btn btn-outline-secondary category-button" data-category="Education">📚 교육/지식</button>
         <button class="btn btn-outline-secondary category-button" data-category="IT">💻 IT/테크</button>
         <button class="btn btn-outline-secondary category-button" data-category="News">📰 뉴스/정치</button>
-        <!-- 라이브 탭 -->
         <button class="btn btn-outline-secondary category-button" data-category="Live">📡 라이브</button>
     </div>
 
@@ -281,72 +269,6 @@
             <label class="form-check-label" for="subFilter50000_plus">5만 이상</label>
         </div>
     </div>
-
-    <!-- 🔥 프리셋 섹션들 -->
-    <div class="text-center mt-3">
-        <h5 class="text-danger mb-2 preset-section-title">🎯 프리셋 검색 (버튼만 눌러도 자동 검색)</h5>
-
-        <!-- 해외 짜집기 -->
-        <div class="preset-group">
-            <span class="text-muted me-2">🌎 해외 짜집기:</span>
-            <div class="btn-group btn-group-sm mb-1">
-                <button class="btn btn-outline-primary preset-button" data-preset="ov_us_funny">🇺🇸 미드/예능 짜집기</button>
-                <button class="btn btn-outline-primary preset-button" data-preset="ov_us_tiktok">🇺🇸 틱톡 밈 짜집기</button>
-                <button class="btn btn-outline-primary preset-button" data-preset="ov_eu_football">⚽ 유럽 축구 하이라이트</button>
-                <button class="btn btn-outline-primary preset-button" data-preset="ov_jp_variety">🇯🇵 일본 예능 짜집기</button>
-            </div>
-            <div class="btn-group btn-group-sm">
-                <button class="btn btn-outline-primary preset-button" data-preset="ov_reaction">🌐 해외 반응/리액션</button>
-                <button class="btn btn-outline-primary preset-button" data-preset="ov_fails">💥 사고/실수/스턴트</button>
-                <button class="btn btn-outline-primary preset-button" data-preset="ov_wholesome">💛 감동/힐링 순간</button>
-                <button class="btn btn-outline-primary preset-button" data-preset="ov_streamer">🎮 해외 스트리머 하이라이트</button>
-            </div>
-        </div>
-
-        <!-- 국내 짜집기 -->
-        <div class="preset-group">
-            <span class="text-muted me-2">🇰🇷 국내 짜집기:</span>
-            <div class="btn-group btn-group-sm">
-                <button class="btn btn-outline-secondary preset-button" data-preset="kr_variety_funny">예능 웃긴 장면</button>
-                <button class="btn btn-outline-secondary preset-button" data-preset="kr_tv_clip">드라마/예능 클립</button>
-                <button class="btn btn-outline-secondary preset-button" data-preset="kr_tiktok">국내 틱톡/쇼츠 짜집기</button>
-                <button class="btn btn-outline-secondary preset-button" data-preset="kr_reaction">한국인 리액션 모음</button>
-            </div>
-        </div>
-
-        <!-- 드라마/로맨스 -->
-        <div class="preset-group">
-            <span class="text-muted me-2">🎭 드라마/로맨스 클립:</span>
-            <div class="btn-group btn-group-sm">
-                <button class="btn btn-outline-secondary preset-button" data-preset="drama_clip">드라마 명장면 모음</button>
-                <button class="btn btn-outline-secondary preset-button" data-preset="drama_romance">로맨스 설레는 장면</button>
-                <button class="btn btn-outline-secondary preset-button" data-preset="drama_makjang">막장 드라마 레전드</button>
-                <button class="btn btn-outline-secondary preset-button" data-preset="drama_kiss">키스/고백 장면 모음</button>
-            </div>
-        </div>
-
-        <!-- 뉴스/정치/이슈 -->
-        <div class="preset-group">
-            <span class="text-muted me-2">📰 뉴스/정치/이슈:</span>
-            <div class="btn-group btn-group-sm">
-                <button class="btn btn-outline-secondary preset-button" data-preset="news_issue">핵심 이슈 짜집기</button>
-                <button class="btn btn-outline-secondary preset-button" data-preset="news_debate">토론/인터뷰 하이라이트</button>
-                <button class="btn btn-outline-secondary preset-button" data-preset="news_world">해외 뉴스 모음</button>
-                <button class="btn btn-outline-secondary preset-button" data-preset="news_economy">경제/주식 이슈 정리</button>
-            </div>
-        </div>
-
-        <!-- AI 설명/해설/정보 -->
-        <div class="preset-group mb-2">
-            <span class="text-muted me-2">🤖 AI/해설/정보:</span>
-            <div class="btn-group btn-group-sm">
-                <button class="btn btn-outline-secondary preset-button" data-preset="ai_explain">AI 음성 해설 모음</button>
-                <button class="btn btn-outline-secondary preset-button" data-preset="ai_history">역사/사건 요약 해설</button>
-                <button class="btn btn-outline-secondary preset-button" data-preset="ai_docu">다큐멘터리 요약 클립</button>
-                <button class="btn btn-outline-secondary preset-button" data-preset="ai_news_explain">뉴스/시사 요약 해설</button>
-            </div>
-        </div>
-    </div>
 </div>
 
 <div class="container main-content">
@@ -402,116 +324,7 @@
     let currentSortMode = 'viewsDesc';
     let currentTrendKeywords = [];
     let currentSubscriberRanges = new Set(['all']);
-    let currentTimeRange = 'r1'; // 기간 필터 상태
-
-    // 🎯 프리셋 검색 데이터 (해외+국내+드라마+뉴스+AI)
-    const SEARCH_PRESETS = {
-        // 🌎 해외 짜집기
-        ov_us_funny: {
-            keyword: 'funny moments compilation best funny clips 2024',
-            langCheckboxId: 'langEN'
-        },
-        ov_us_tiktok: {
-            keyword: 'tiktok memes compilation viral tiktok funny',
-            langCheckboxId: 'langEN'
-        },
-        ov_eu_football: {
-            keyword: 'football highlights compilation best goals funny football fails',
-            langCheckboxId: 'langEN'
-        },
-        ov_jp_variety: {
-            keyword: 'バラエティ 切り抜き 日本 バラエティ おもしろい まとめ',
-            langCheckboxId: 'langJP'
-        },
-        ov_reaction: {
-            keyword: 'reaction compilation best reaction mashup viral reactions',
-            langCheckboxId: 'langEN'
-        },
-        ov_fails: {
-            keyword: 'fails compilation epic fails 2024 unbelievable moments',
-            langCheckboxId: 'langEN'
-        },
-        ov_wholesome: {
-            keyword: 'wholesome moments compilation heartwarming clips',
-            langCheckboxId: 'langEN'
-        },
-        ov_streamer: {
-            keyword: 'streamer funny moments twitch clips best gaming highlights',
-            langCheckboxId: 'langEN'
-        },
-
-        // 🇰🇷 국내 짜집기
-        kr_variety_funny: {
-            keyword: '예능 웃긴 장면 모음 레전드 하이라이트',
-            langCheckboxId: 'langKR'
-        },
-        kr_tv_clip: {
-            keyword: '드라마 예능 클립 모음 하이라이트',
-            langCheckboxId: 'langKR'
-        },
-        kr_tiktok: {
-            keyword: '틱톡 리얼 쇼츠 모음 웃긴 영상',
-            langCheckboxId: 'langKR'
-        },
-        kr_reaction: {
-            keyword: '한국인 리액션 모음 해외 반응',
-            langCheckboxId: 'langKR'
-        },
-
-        // 🎭 드라마/로맨스
-        drama_clip: {
-            keyword: '드라마 명장면 모음 레전드 장면',
-            langCheckboxId: 'langKR'
-        },
-        drama_romance: {
-            keyword: '로맨스 드라마 설레는 장면 모음',
-            langCheckboxId: 'langKR'
-        },
-        drama_makjang: {
-            keyword: '막장 드라마 레전드 모음 말도안되는 전개',
-            langCheckboxId: 'langKR'
-        },
-        drama_kiss: {
-            keyword: '드라마 키스신 고백 장면 모음',
-            langCheckboxId: 'langKR'
-        },
-
-        // 📰 뉴스/정치/이슈
-        news_issue: {
-            keyword: '뉴스 이슈 정리 모음 하이라이트',
-            langCheckboxId: 'langKR'
-        },
-        news_debate: {
-            keyword: '토론 인터뷰 하이라이트 모음',
-            langCheckboxId: 'langKR'
-        },
-        news_world: {
-            keyword: 'world news highlights compilation',
-            langCheckboxId: 'langEN'
-        },
-        news_economy: {
-            keyword: '경제 뉴스 주식 부동산 이슈 정리',
-            langCheckboxId: 'langKR'
-        },
-
-        // 🤖 AI/해설/정보
-        ai_explain: {
-            keyword: 'AI 음성 해설 요약 영상 모음',
-            langCheckboxId: 'langKR'
-        },
-        ai_history: {
-            keyword: '역사 사건 요약 해설 모음',
-            langCheckboxId: 'langKR'
-        },
-        ai_docu: {
-            keyword: '다큐멘터리 요약 정리 클립',
-            langCheckboxId: 'langKR'
-        },
-        ai_news_explain: {
-            keyword: '뉴스 시사 요약 해설 모음',
-            langCheckboxId: 'langKR'
-        }
-    };
+    let currentTimeRange = 'r1';
 
     const STOPWORDS_COMMON = new Set([
         'official','video','music','mv','the','and','for','with','from','feat','live','of','in','on',
@@ -1377,7 +1190,7 @@
         });
     });
 
-    // 기간 필터 버튼
+    // 기간 필터
     document.querySelectorAll('.time-range-button').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelector('.time-range-button.active')?.classList.remove('active');
@@ -1385,12 +1198,11 @@
             currentTimeRange = this.getAttribute('data-range');
 
             const categoryId = CATEGORIES[currentCategory];
-            if (currentSearchKeyword) {
-                searchVideosByKeyword(currentSearchKeyword);
-            } else if (currentCategory === 'Live') {
-                fetchLiveVideos();
-            } else {
-                fetchPopularVideos(categoryId);
+            const keyword = document.getElementById('searchInput').value.trim();
+            if (keyword) searchVideosByKeyword(keyword);
+            else {
+                if (currentCategory === 'Live') fetchLiveVideos();
+                else fetchPopularVideos(categoryId);
             }
         });
     });
@@ -1425,35 +1237,6 @@
                 }
             }
             updateVideoListAndStatus();
-        });
-    });
-
-    // 🎯 프리셋 버튼 핸들러
-    document.querySelectorAll('.preset-button').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const key = this.getAttribute('data-preset');
-            const preset = SEARCH_PRESETS[key];
-            if (!preset) return;
-
-            // 언어 체크박스 설정
-            ['langKR', 'langEN', 'langJP'].forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.checked = (id === preset.langCheckboxId);
-            });
-
-            // 카테고리는 전체로
-            currentCategory = 'All';
-            document.querySelectorAll('.category-button').forEach(b => b.classList.remove('active'));
-            document.querySelector('.category-button[data-category="All"]')?.classList.add('active');
-            document.getElementById('category-title').textContent = '📌 전체 영상 (프리셋 검색)';
-
-            // 검색창에 키워드 표시
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) searchInput.value = preset.keyword;
-
-            currentSearchKeyword = '';
-            searchVideosByKeyword(preset.keyword);
         });
     });
 
