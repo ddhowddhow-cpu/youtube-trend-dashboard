@@ -32,12 +32,16 @@
             overflow: hidden;
             transition: transform 0.2s;
         }
-        .video-card:hover { transform: translateY(-5px); }
+        .video-card:hover {
+            transform: translateY(-5px);
+        }
         .video-card img {
             width: 100%;
             height: auto;
         }
-        .card-body { padding: 15px; }
+        .card-body {
+            padding: 15px;
+        }
         .card-title {
             font-size: 1.1rem;
             font-weight: 700;
@@ -60,9 +64,19 @@
         .badge-views { background-color: #008080; color: white; }
         .badge-likes { background-color: #ffd700; color: #212529; }
         .badge-comments { background-color: #6a5acd; color: white; }
-        .badge-velocity { background-color: #20c997; color: white; }
-        .badge-likeRate { background-color: #ff6f61; color: white; }
-        .badge-commentRate { background-color: #4dabf7; color: white; }
+
+        .badge-velocity {
+            background-color: #20c997;
+            color: white;
+        }
+        .badge-likeRate {
+            background-color: #ff6f61;
+            color: white;
+        }
+        .badge-commentRate {
+            background-color: #4dabf7;
+            color: white;
+        }
 
         .category-button {
             border-radius: 20px;
@@ -78,8 +92,12 @@
             background-color: #e9ecef;
             color: #495057;
         }
-        .filter-bar { margin-top: 10px; }
-        .filter-bar .btn-group + .btn-group { margin-left: 8px; }
+        .filter-bar {
+            margin-top: 10px;
+        }
+        .filter-bar .btn-group + .btn-group {
+            margin-left: 8px;
+        }
 
         .trend-box {
             background-color: #ffffff;
@@ -90,8 +108,12 @@
             overflow-y: auto;
             font-size: 0.9rem;
         }
-        .trend-box h5 { font-weight: 700; }
-        .trend-meta { font-size: 0.75rem; }
+        .trend-box h5 {
+            font-weight: 700;
+        }
+        .trend-meta {
+            font-size: 0.75rem;
+        }
         .trend-list {
             padding-left: 20px;
             margin-bottom: 0;
@@ -110,7 +132,9 @@
             text-overflow: ellipsis;
             cursor: pointer;
         }
-        .trend-keyword:hover { text-decoration: underline; }
+        .trend-keyword:hover {
+            text-decoration: underline;
+        }
         .trend-score-badge {
             font-size: 0.7rem;
             padding: 2px 6px;
@@ -141,6 +165,11 @@
             font-weight: 700;
             margin-bottom: 4px;
         }
+
+        /* 소셜 링크 버튼 줄 */
+        .social-link-row small {
+            font-size: 0.75rem;
+        }
     </style>
 </head>
 <body>
@@ -148,17 +177,17 @@
 <div class="container-fluid header">
     <div class="row align-items-center">
         <div class="col-md-3 text-center">
-            <!-- 제목/부제 + 클릭 가능 -->
-            <h3 id="logoTitle" style="font-weight:800; letter-spacing:-0.5px; cursor:pointer;">
-                YouTube 트렌드 분석 · 제작: 자돈
-            </h3>
-            <p class="text-muted" style="margin-top:-3px;">기간별 인기 영상 자동 분석 시스템</p>
+            <h3>유튜브 트렌드 찾기 제작 : 자돈</h3>
+            <p class="text-muted">기간별 인기 영상 분석 · 소셜 태그 탐색</p>
         </div>
         <div class="col-md-6">
+            <!-- 검색창 -->
             <div class="input-group">
-                <input id="searchInput" type="text" class="form-control" placeholder="제목/채널/키워드 검색 (예: 폭싹)">
+                <input id="searchInput" type="text" class="form-control" placeholder="제목/채널/키워드 검색 (예: 여캠, 태연)">
                 <button id="searchBtn" class="btn btn-primary">검색</button>
             </div>
+
+            <!-- 언어 / 지역 선택 -->
             <div class="mt-2">
                 <span class="text-muted me-3">언어 / 지역 선택:</span>
                 <div class="form-check form-check-inline">
@@ -174,7 +203,33 @@
                     <label class="form-check-label" for="langJP">🇯🇵 일본</label>
                 </div>
             </div>
+
+            <!-- 🔗 유튜브 / 인스타 / 틱톡 소셜 검색 링크 -->
+            <div class="mt-2 social-link-row" id="social-link-row" style="display:none;">
+                <div class="row g-1">
+                    <div class="col-4 text-center">
+                        <a id="ytLink" href="#" target="_blank" class="btn btn-sm w-100 btn-outline-danger">
+                            🔴 유튜브에서 검색
+                        </a>
+                    </div>
+                    <div class="col-4 text-center">
+                        <a id="igLink" href="#" target="_blank" class="btn btn-sm w-100 btn-outline-primary">
+                            📸 인스타 태그
+                        </a>
+                    </div>
+                    <div class="col-4 text-center">
+                        <a id="ttLink" href="#" target="_blank" class="btn btn-sm w-100 btn-outline-dark">
+                            🎵 틱톡 태그
+                        </a>
+                    </div>
+                </div>
+                <small class="text-muted">
+                    현재 입력한 검색어 기준으로 각각 새 창에서 열립니다.
+                </small>
+            </div>
         </div>
+
+        <!-- API 키 영역 -->
         <div class="col-md-3 text-center">
             <p>API 연동 상태: <span id="api-conn-badge" class="badge bg-secondary">API 키 미등록</span></p>
 
@@ -188,7 +243,10 @@
             </small>
         </div>
     </div>
+
     <hr>
+
+    <!-- 카테고리 버튼 -->
     <div class="text-center">
         <button class="btn btn-outline-danger category-button active" data-category="All">📌 전체 영상</button>
         <button class="btn btn-outline-secondary category-button" data-category="Music">🎶 음악/댄스</button>
@@ -201,6 +259,7 @@
         <button class="btn btn-outline-secondary category-button" data-category="Live">📡 라이브</button>
     </div>
 
+    <!-- 필터 바 -->
     <div class="text-center filter-bar">
         <!-- 길이 필터 -->
         <div class="btn-group btn-group-sm" role="group" aria-label="Duration filter">
@@ -229,6 +288,7 @@
         </div>
     </div>
 
+    <!-- 구독자 필터 -->
     <div class="text-center mt-2">
         <span class="text-muted me-2">구독자 수 필터:</span>
 
@@ -263,7 +323,7 @@
         </div>
     </div>
 
-    <!-- 즐겨찾기 영역 -->
+    <!-- ⭐ 즐겨찾기 영역 -->
     <div class="container mt-2">
         <div class="favorite-section">
             <div class="favorite-section-title">⭐ 나만의 즐겨찾기 키워드 그룹</div>
@@ -287,6 +347,7 @@
     </div>
 </div>
 
+<!-- 메인 컨텐츠 -->
 <div class="container main-content">
     <div class="row">
         <div class="col-lg-9 col-md-8">
@@ -342,7 +403,7 @@
     let currentSubscriberRanges = new Set(['all']);
     let currentTimeRange = 'r1';
 
-    // 즐겨찾기 그룹
+    // ⭐ 즐겨찾기 그룹 (대태그 → [소태그...])
     let favoriteGroups = {};
 
     const STOPWORDS_COMMON = new Set([
@@ -424,6 +485,7 @@
         return { regionCode: 'KR', relevanceLanguage: 'ko' };
     }
 
+    // 기간 설정
     function getTimeRangeConfig() {
         const now = new Date();
         const hour = 60 * 60 * 1000;
@@ -738,10 +800,40 @@
         }
     }
 
+    // 🔗 현재 검색어 기준으로 유튜브 / 인스타 / 틱톡 링크 업데이트
+    function updateSocialLinks(keyword) {
+        const row = document.getElementById('social-link-row');
+        const yt  = document.getElementById('ytLink');
+        const ig  = document.getElementById('igLink');
+        const tt  = document.getElementById('ttLink');
+        if (!row || !yt || !ig || !tt) return;
+
+        const trimmed = (keyword || '').trim();
+        if (!trimmed) {
+            row.style.display = 'none';
+            yt.removeAttribute('href');
+            ig.removeAttribute('href');
+            tt.removeAttribute('href');
+            return;
+        }
+
+        const tag = trimmed.replace(/^#/, '');
+        const encoded = encodeURIComponent(tag);
+
+        yt.href = `https://www.youtube.com/results?search_query=${encoded}`;
+        ig.href = `https://www.instagram.com/explore/tags/${encoded}/`;
+        tt.href = `https://www.tiktok.com/tag/${encoded}`;
+
+        row.style.display = 'block';
+    }
+
     async function searchVideosByKeyword(keyword) {
         const videoListDiv = document.getElementById('video-list');
         const apiStatusP = document.getElementById('api-status');
         const apiConnBadge = document.getElementById('api-conn-badge');
+
+        // 🔗 소셜 링크 업데이트
+        updateSocialLinks(keyword);
 
         if (!API_KEY) {
             videoListDiv.innerHTML = '';
@@ -994,7 +1086,7 @@
         const viewVelocity = viewCount > 0 ? viewCount / hoursSinceUpload : 0;
 
         const likeRate = viewCount > 0 ? (likeCount / viewCount) * 100 : 0;
-               const commentRate = viewCount > 0 ? (commentCount / viewCount) * 100 : 0;
+        const commentRate = viewCount > 0 ? (commentCount / viewCount) * 100 : 0;
 
         const durationSeconds = parseDurationSeconds(video.contentDetails?.duration || '');
         const durationLabel = formatDurationLabel(durationSeconds);
@@ -1147,7 +1239,7 @@
         updateTrendKeywords(entries);
     }
 
-    // 즐겨찾기
+    // ⭐ 즐겨찾기 관련 함수들
     function loadFavorites() {
         try {
             const raw = window.localStorage.getItem('ytTrendFavorites');
@@ -1201,7 +1293,7 @@
             wrapper.appendChild(groupDiv);
         });
 
-        // 즐겨찾기 검색
+        // 클릭 이벤트(검색)
         wrapper.querySelectorAll('.fav-group-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const name = btn.getAttribute('data-group');
@@ -1214,7 +1306,7 @@
             });
         });
 
-        // 즐겨찾기 삭제
+        // 삭제 이벤트
         wrapper.querySelectorAll('.fav-group-del').forEach(btn => {
             btn.addEventListener('click', () => {
                 const name = btn.getAttribute('data-group');
@@ -1237,6 +1329,7 @@
             document.getElementById('category-title').textContent = this.textContent.trim();
             document.getElementById('searchInput').value = '';
             currentSearchKeyword = '';
+            updateSocialLinks(''); // 카테고리 바꿀 때 검색어 리셋
 
             if (currentCategory === 'Live') {
                 fetchLiveVideos();
@@ -1345,6 +1438,7 @@
         const categoryId = CATEGORIES[currentCategory];
         if (!keyword) {
             currentSearchKeyword = '';
+            updateSocialLinks('');
             if (currentCategory === 'Live') fetchLiveVideos();
             else fetchPopularVideos(categoryId);
         } else {
@@ -1363,24 +1457,7 @@
         updateTrendRegionInfo();
         fetchPopularVideos(CATEGORIES[currentCategory]);
 
-        // 제목 클릭 시 초기화 + 새로 불러오기
-        const logo = document.getElementById('logoTitle');
-        if (logo) {
-            logo.addEventListener('click', () => {
-                document.getElementById('searchInput').value = '';
-                currentSearchKeyword = '';
-                currentCategory = 'All';
-
-                document.querySelectorAll('.category-button').forEach(btn => btn.classList.remove('active'));
-                const allBtn = document.querySelector('.category-button[data-category="All"]');
-                if (allBtn) allBtn.classList.add('active');
-
-                fetchPopularVideos(CATEGORIES['All']);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-        }
-
-        // 즐겨찾기 추가 버튼
+        // 즐겨찾기 추가 버튼 이벤트
         const addFavBtn = document.getElementById('addFavBtn');
         if (addFavBtn) {
             addFavBtn.addEventListener('click', () => {
