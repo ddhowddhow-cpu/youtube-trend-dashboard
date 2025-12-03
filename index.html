@@ -32,16 +32,12 @@
             overflow: hidden;
             transition: transform 0.2s;
         }
-        .video-card:hover {
-            transform: translateY(-5px);
-        }
+        .video-card:hover { transform: translateY(-5px); }
         .video-card img {
             width: 100%;
             height: auto;
         }
-        .card-body {
-            padding: 15px;
-        }
+        .card-body { padding: 15px; }
         .card-title {
             font-size: 1.1rem;
             font-weight: 700;
@@ -64,19 +60,9 @@
         .badge-views { background-color: #008080; color: white; }
         .badge-likes { background-color: #ffd700; color: #212529; }
         .badge-comments { background-color: #6a5acd; color: white; }
-
-        .badge-velocity {
-            background-color: #20c997;
-            color: white;
-        }
-        .badge-likeRate {
-            background-color: #ff6f61;
-            color: white;
-        }
-        .badge-commentRate {
-            background-color: #4dabf7;
-            color: white;
-        }
+        .badge-velocity { background-color: #20c997; color: white; }
+        .badge-likeRate { background-color: #ff6f61; color: white; }
+        .badge-commentRate { background-color: #4dabf7; color: white; }
 
         .category-button {
             border-radius: 20px;
@@ -92,12 +78,8 @@
             background-color: #e9ecef;
             color: #495057;
         }
-        .filter-bar {
-            margin-top: 10px;
-        }
-        .filter-bar .btn-group + .btn-group {
-            margin-left: 8px;
-        }
+        .filter-bar { margin-top: 10px; }
+        .filter-bar .btn-group + .btn-group { margin-left: 8px; }
 
         .trend-box {
             background-color: #ffffff;
@@ -108,12 +90,8 @@
             overflow-y: auto;
             font-size: 0.9rem;
         }
-        .trend-box h5 {
-            font-weight: 700;
-        }
-        .trend-meta {
-            font-size: 0.75rem;
-        }
+        .trend-box h5 { font-weight: 700; }
+        .trend-meta { font-size: 0.75rem; }
         .trend-list {
             padding-left: 20px;
             margin-bottom: 0;
@@ -132,9 +110,7 @@
             text-overflow: ellipsis;
             cursor: pointer;
         }
-        .trend-keyword:hover {
-            text-decoration: underline;
-        }
+        .trend-keyword:hover { text-decoration: underline; }
         .trend-score-badge {
             font-size: 0.7rem;
             padding: 2px 6px;
@@ -172,7 +148,7 @@
 <div class="container-fluid header">
     <div class="row align-items-center">
         <div class="col-md-3 text-center">
-            <!-- 제목/부제 수정 + 클릭용 id 부여 -->
+            <!-- 제목/부제 + 클릭 가능 -->
             <h3 id="logoTitle" style="font-weight:800; letter-spacing:-0.5px; cursor:pointer;">
                 YouTube 트렌드 분석 · 제작: 자돈
             </h3>
@@ -557,7 +533,7 @@
 
     async function fetchPopularVideos(categoryId) {
         const videoListDiv = document.getElementById('video-list');
-        the apiStatusP = document.getElementById('api-status');
+        const apiStatusP = document.getElementById('api-status');
         const apiConnBadge = document.getElementById('api-conn-badge');
 
         if (!API_KEY) {
@@ -1018,7 +994,7 @@
         const viewVelocity = viewCount > 0 ? viewCount / hoursSinceUpload : 0;
 
         const likeRate = viewCount > 0 ? (likeCount / viewCount) * 100 : 0;
-        const commentRate = viewCount > 0 ? (commentCount / viewCount) * 100 : 0;
+               const commentRate = viewCount > 0 ? (commentCount / viewCount) * 100 : 0;
 
         const durationSeconds = parseDurationSeconds(video.contentDetails?.duration || '');
         const durationLabel = formatDurationLabel(durationSeconds);
@@ -1381,23 +1357,21 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         loadApiKey();
-        loadFavorites(); // 즐겨찾기 로드
+        loadFavorites();
         document.getElementById('saveApiKeyBtn').addEventListener('click', saveApiKey);
         document.getElementById('clearApiKeyBtn').addEventListener('click', clearApiKey);
         updateTrendRegionInfo();
         fetchPopularVideos(CATEGORIES[currentCategory]);
 
-        // 제목 클릭 시 홈처럼 초기화 + 새로고침
+        // 제목 클릭 시 초기화 + 새로 불러오기
         const logo = document.getElementById('logoTitle');
         if (logo) {
             logo.addEventListener('click', () => {
                 document.getElementById('searchInput').value = '';
                 currentSearchKeyword = '';
-
                 currentCategory = 'All';
-                document.querySelectorAll('.category-button').forEach(btn => {
-                    btn.classList.remove('active');
-                });
+
+                document.querySelectorAll('.category-button').forEach(btn => btn.classList.remove('active'));
                 const allBtn = document.querySelector('.category-button[data-category="All"]');
                 if (allBtn) allBtn.classList.add('active');
 
