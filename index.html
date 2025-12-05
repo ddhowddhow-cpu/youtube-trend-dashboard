@@ -170,6 +170,38 @@
         .social-link-row small {
             font-size: 0.75rem;
         }
+
+        /* 🔥 채널 랭킹 박스 */
+        .channel-rank-box {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 12px 14px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        .channel-rank-box h5 {
+            font-weight: 700;
+        }
+        .channel-rank-list {
+            padding-left: 20px;
+            margin-bottom: 0;
+        }
+        .channel-rank-list li {
+            margin-bottom: 6px;
+        }
+        .channel-name-link {
+            font-weight: 700;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .channel-name-link:hover {
+            text-decoration: underline;
+        }
+        .channel-meta-badges {
+            font-size: 0.75rem;
+        }
     </style>
 </head>
 <body>
@@ -370,6 +402,17 @@
                     <li><span class="trend-keyword">데이터 로딩 중...</span></li>
                 </ol>
             </div>
+
+            <!-- 🏆 채널 랭킹 박스 -->
+            <div class="channel-rank-box">
+                <h5>🏆 인기 채널 TOP 30</h5>
+                <p class="text-muted channel-meta mb-2" id="channel-rank-info">
+                    현재 표시 중인 영상 기준으로 집계됩니다.
+                </p>
+                <ol id="channel-rank-list" class="channel-rank-list">
+                    <li><span class="text-muted">채널 랭킹을 계산 중입니다...</span></li>
+                </ol>
+            </div>
         </div>
     </div>
 </div>
@@ -393,8 +436,20 @@
     };
     const ALL_CATEGORY_IDS = ['10','24','17','22','27','28','25'];
 
+    // YouTube 비디오 카테고리 ID → 한글 라벨
+    const VIDEO_CATEGORY_LABELS = {
+        '10': '음악',
+        '24': '엔터테인먼트',
+        '17': '스포츠',
+        '22': 'Vlog/일상',
+        '27': '교육/지식',
+        '28': 'IT/테크',
+        '25': '뉴스/정치'
+    };
+
     let currentCategory = 'All';
     let currentBaseVideos = [];
+    // 🔹 채널 정보: { subscribers, totalViews, videoCount }
     let currentChannelStatsMap = {};
     let currentSearchKeyword = '';
     let currentDurationFilter = 'all';
@@ -562,6 +617,8 @@
         document.getElementById('api-status').textContent = 'API 키가 해제되었습니다. 다시 사용하려면 API 키를 등록해 주세요.';
         document.getElementById('trend-keyword-list').innerHTML =
             '<li><span class="trend-keyword">API 키를 먼저 등록해 주세요.</span></li>';
+        document.getElementById('channel-rank-list').innerHTML =
+            '<li><span class="text-muted">API 키를 먼저 등록해 주세요.</span></li>';
         alert('API 키가 해제되었습니다.');
     }
 
@@ -643,6 +700,7 @@
                 currentChannelStatsMap = {};
                 renderVideoList([], {});
                 updateTrendKeywords([]);
+                updateChannelRankingFromList([]);
                 apiStatusP.textContent =
                     '표시할 영상이 없습니다. (이 카테고리/지역에서 인기 영상이 없거나 API 쿼터 제한일 수 있습니다)';
                 document.getElementById('time-info').textContent =
@@ -703,6 +761,7 @@
             apiConnBadge.className = 'badge bg-danger';
             apiConnBadge.textContent = '오류';
             updateTrendKeywords([]);
+            updateChannelRankingFromList([]);
         }
     }
 
@@ -743,6 +802,7 @@
                 currentChannelStatsMap = {};
                 renderVideoList([], {});
                 updateTrendKeywords([]);
+                updateChannelRankingFromList([]);
                 apiStatusP.textContent = '현재 이 지역에서 인기 라이브 방송이 없습니다.';
                 document.getElementById('time-info').textContent = '라이브 방송 없음.';
                 apiConnBadge.className = 'badge bg-warning text-dark';
@@ -797,6 +857,7 @@
             apiConnBadge.className = 'badge bg-danger';
             apiConnBadge.textContent = '오류';
             updateTrendKeywords([]);
+            updateChannelRankingFromList([]);
         }
     }
 
@@ -883,6 +944,7 @@
                 currentChannelStatsMap = {};
                 renderVideoList([], {});
                 updateTrendKeywords([]);
+                updateChannelRankingFromList([]);
                 apiStatusP.textContent = `"${keyword}" 검색 결과가 없습니다.`;
                 document.getElementById('time-info').textContent = '검색 결과 없음.';
                 apiConnBadge.className = 'badge bg-warning text-dark';
@@ -944,6 +1006,7 @@
             apiConnBadge.className = 'badge bg-danger';
             apiConnBadge.textContent = '검색 오류';
             updateTrendKeywords([]);
+            updateChannelRankingFromList([]);
         }
     }
 
@@ -971,10 +1034,15 @@
                 if (data.items) {
                     data.items.forEach(ch => {
                         const id = ch.id;
-                        const subs = ch.statistics.subscriberCount
-                            ? parseInt(ch.statistics.subscriberCount)
-                            : 0;
-                        map[id] = subs;
+                        const stats = ch.statistics || {};
+                        const subs = stats.subscriberCount ? parseInt(stats.subscriberCount) : 0;
+                        const totalViews = stats.viewCount ? parseInt(stats.viewCount) : 0;
+                        const vidCount = stats.videoCount ? parseInt(stats.videoCount) : 0;
+                        map[id] = {
+                            subscribers: subs,
+                            totalViews: totalViews,
+                            videoCount: vidCount
+                        };
                     });
                 }
             } catch (e) {
@@ -1010,7 +1078,8 @@
 
         if (!(currentSubscriberRanges.size === 1 && currentSubscriberRanges.has('all'))) {
             list = list.filter(v => {
-                const subs = currentChannelStatsMap[v.snippet.channelId] || 0;
+                const info = currentChannelStatsMap[v.snippet.channelId];
+                const subs = info?.subscribers || 0;
                 for (const rangeKey of currentSubscriberRanges) {
                     if (matchSubscriberRange(subs, rangeKey)) return true;
                 }
@@ -1048,6 +1117,7 @@
         const apiStatusP = document.getElementById('api-status');
         const list = getFilteredVideos();
         renderVideoList(list, currentChannelStatsMap);
+        updateChannelRankingFromList(list);
         if (!apiStatusP) return;
         if (currentSearchKeyword) {
             apiStatusP.textContent = `"${currentSearchKeyword}" 검색 결과: ${list.length}개`;
@@ -1076,7 +1146,8 @@
         const viewCount = video.statistics.viewCount ? parseInt(video.statistics.viewCount) : 0;
         const likeCount = video.statistics.likeCount ? parseInt(video.statistics.likeCount) : 0;
         const commentCount = video.statistics.commentCount ? parseInt(video.statistics.commentCount) : 0;
-        const subscriberCount = channelStatsMap[channelId] || 0;
+        const chInfo = channelStatsMap[channelId];
+        const subscriberCount = chInfo?.subscribers || 0;
 
         const publishedAt = video.snippet.publishedAt;
         const timeAgoText = timeAgo(publishedAt);
@@ -1237,6 +1308,128 @@
         }
         const entries = buildTrendKeywordsFromVideos(currentBaseVideos);
         updateTrendKeywords(entries);
+    }
+
+    // 🔥 채널 랭킹용: 카테고리 이름
+    function getVideoCategoryLabel(catId) {
+        if (!catId) return '기타';
+        return VIDEO_CATEGORY_LABELS[catId] || '기타';
+    }
+
+    // 🔥 채널 랭킹 데이터 생성
+    function buildChannelRankingFromVideos(videos) {
+        const channelAgg = new Map();
+        videos.forEach(v => {
+            const chId = v.snippet.channelId;
+            if (!chId) return;
+            const chTitle = v.snippet.channelTitle || 'Unknown Channel';
+            const views = parseInt(v.statistics?.viewCount || '0', 10);
+            const catId = v.snippet.categoryId || '';
+
+            let obj = channelAgg.get(chId);
+            if (!obj) {
+                obj = {
+                    channelId: chId,
+                    channelTitle: chTitle,
+                    totalViews: 0,
+                    videoCount: 0,
+                    categoryCount: {}
+                };
+                channelAgg.set(chId, obj);
+            }
+            obj.totalViews += views;
+            obj.videoCount += 1;
+            if (catId) {
+                obj.categoryCount[catId] = (obj.categoryCount[catId] || 0) + 1;
+            }
+        });
+
+        const result = [];
+        channelAgg.forEach(obj => {
+            let mainCatId = null;
+            let maxCount = 0;
+            Object.entries(obj.categoryCount).forEach(([cid, count]) => {
+                if (count > maxCount) {
+                    maxCount = count;
+                    mainCatId = cid;
+                }
+            });
+            obj.mainCategoryId = mainCatId;
+            obj.mainCategoryLabel = getVideoCategoryLabel(mainCatId);
+
+            const chInfo = currentChannelStatsMap[obj.channelId];
+            obj.totalChannelViews = chInfo?.totalViews || null;
+
+            result.push(obj);
+        });
+
+        // 합산 조회수 기준 내림차순 정렬
+        result.sort((a, b) => b.totalViews - a.totalViews);
+        return result.slice(0, 30); // TOP 30만
+    }
+
+    function renderChannelRanking(ranking) {
+        const listEl = document.getElementById('channel-rank-list');
+        if (!listEl) return;
+
+        listEl.innerHTML = '';
+        if (!ranking || !ranking.length) {
+            listEl.innerHTML = '<li><span class="text-muted">채널 랭킹을 계산할 데이터가 없습니다.</span></li>';
+            return;
+        }
+
+        ranking.forEach((ch, idx) => {
+            const li = document.createElement('li');
+
+            const a = document.createElement('a');
+            a.className = 'channel-name-link';
+            a.href = `https://www.youtube.com/channel/${ch.channelId}`;
+            a.target = '_blank';
+            a.textContent = `${idx + 1}. ${ch.channelTitle}`;
+
+            const metaDiv = document.createElement('div');
+            metaDiv.className = 'channel-meta-badges';
+
+            const badgeCat = document.createElement('span');
+            badgeCat.className = 'badge bg-light text-dark me-1';
+            badgeCat.textContent = `카테고리: ${ch.mainCategoryLabel}`;
+
+            const badgeVid = document.createElement('span');
+            badgeVid.className = 'badge bg-secondary me-1';
+            badgeVid.textContent = `영상 ${ch.videoCount}개`;
+
+            const badgeViews = document.createElement('span');
+            badgeViews.className = 'badge bg-info text-dark me-1';
+            badgeViews.textContent = `기간 합산 조회수 ${formatNumber(ch.totalViews)}회`;
+
+            metaDiv.appendChild(badgeCat);
+            metaDiv.appendChild(badgeVid);
+            metaDiv.appendChild(badgeViews);
+
+            if (ch.totalChannelViews != null) {
+                const badgeTotal = document.createElement('span');
+                badgeTotal.className = 'badge bg-warning text-dark';
+                badgeTotal.textContent = `채널 총 조회수 ${formatNumber(ch.totalChannelViews)}회`;
+                metaDiv.appendChild(badgeTotal);
+            }
+
+            li.appendChild(a);
+            li.appendChild(metaDiv);
+            listEl.appendChild(li);
+        });
+    }
+
+    function updateChannelRankingFromList(videos) {
+        const infoEl = document.getElementById('channel-rank-info');
+        const ranking = buildChannelRankingFromVideos(videos || []);
+        if (infoEl) {
+            if (!videos || !videos.length) {
+                infoEl.textContent = '채널 데이터를 계산할 영상이 없습니다.';
+            } else {
+                infoEl.textContent = '현재 표시 중인 영상 기준으로 집계됩니다.';
+            }
+        }
+        renderChannelRanking(ranking);
     }
 
     // ⭐ 즐겨찾기 관련 함수들
