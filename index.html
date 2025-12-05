@@ -107,6 +107,7 @@
             max-height: 80vh;
             overflow-y: auto;
             font-size: 0.9rem;
+            margin-top: 10px;
         }
         .trend-box h5 {
             font-weight: 700;
@@ -171,36 +172,42 @@
             font-size: 0.75rem;
         }
 
-        /* 🔥 채널 랭킹 박스 */
+        /* 🔥 채널 랭킹 박스 - 더 크고 진하게 */
         .channel-rank-box {
             background-color: #ffffff;
-            border-radius: 8px;
-            padding: 12px 14px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
-            margin-top: 10px;
-            font-size: 0.9rem;
+            border-radius: 10px;
+            padding: 16px 16px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            font-size: 0.98rem;
         }
         .channel-rank-box h5 {
-            font-weight: 700;
+            font-weight: 800;
+            font-size: 1.15rem;
         }
         .channel-rank-list {
             padding-left: 20px;
             margin-bottom: 0;
         }
         .channel-rank-list li {
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
         .channel-name-link {
-            font-weight: 700;
+            font-weight: 800;
             text-decoration: none;
             display: block;
-            margin-bottom: 2px;
+            margin-bottom: 3px;
+            font-size: 1.0rem;
+            color: #0d6efd;
         }
         .channel-name-link:hover {
             text-decoration: underline;
         }
         .channel-meta-badges {
+            font-size: 0.78rem;
+        }
+        .channel-sort-group .btn {
             font-size: 0.75rem;
+            padding: 2px 6px;
         }
     </style>
 </head>
@@ -390,6 +397,28 @@
         </div>
 
         <div class="col-lg-3 col-md-4">
+            <!-- 🏆 채널 랭킹 박스 : 위쪽 -->
+            <div class="channel-rank-box mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">🏆 인기 채널 TOP 50</h5>
+                    <div class="btn-group btn-group-sm channel-sort-group" role="group" aria-label="Channel sort">
+                        <button class="btn btn-outline-dark channel-sort-button active" data-order="desc">
+                            조회수 높은 순
+                        </button>
+                        <button class="btn btn-outline-dark channel-sort-button" data-order="asc">
+                            조회수 낮은 순
+                        </button>
+                    </div>
+                </div>
+                <p class="text-muted channel-meta mb-2 mt-1" id="channel-rank-info">
+                    현재 표시 중인 영상 기준으로 집계됩니다.
+                </p>
+                <ol id="channel-rank-list" class="channel-rank-list">
+                    <li><span class="text-muted">채널 랭킹을 계산 중입니다...</span></li>
+                </ol>
+            </div>
+
+            <!-- 🔥 키워드 박스 : 아래쪽 -->
             <div class="trend-box">
                 <h5>🔥 실시간 트렌드 키워드 TOP 30</h5>
                 <p class="text-muted trend-meta mb-1" id="trend-region-info">
@@ -400,17 +429,6 @@
                 </p>
                 <ol id="trend-keyword-list" class="trend-list">
                     <li><span class="trend-keyword">데이터 로딩 중...</span></li>
-                </ol>
-            </div>
-
-            <!-- 🏆 채널 랭킹 박스 -->
-            <div class="channel-rank-box">
-                <h5>🏆 인기 채널 TOP 30</h5>
-                <p class="text-muted channel-meta mb-2" id="channel-rank-info">
-                    현재 표시 중인 영상 기준으로 집계됩니다.
-                </p>
-                <ol id="channel-rank-list" class="channel-rank-list">
-                    <li><span class="text-muted">채널 랭킹을 계산 중입니다...</span></li>
                 </ol>
             </div>
         </div>
@@ -436,7 +454,7 @@
     };
     const ALL_CATEGORY_IDS = ['10','24','17','22','27','28','25'];
 
-    // YouTube 비디오 카테고리 ID → 한글 라벨
+    // 비디오 카테고리 ID → 한글 라벨
     const VIDEO_CATEGORY_LABELS = {
         '10': '음악',
         '24': '엔터테인먼트',
@@ -449,7 +467,7 @@
 
     let currentCategory = 'All';
     let currentBaseVideos = [];
-    // 🔹 채널 정보: { subscribers, totalViews, videoCount }
+    // 채널 정보: { subscribers, totalViews, videoCount }
     let currentChannelStatsMap = {};
     let currentSearchKeyword = '';
     let currentDurationFilter = 'all';
@@ -458,8 +476,12 @@
     let currentSubscriberRanges = new Set(['all']);
     let currentTimeRange = 'r1';
 
-    // ⭐ 즐겨찾기 그룹 (대태그 → [소태그...])
+    // 즐겨찾기
     let favoriteGroups = {};
+
+    // 채널 랭킹 정렬/데이터
+    let currentChannelRankingRaw = [];
+    let channelRankOrder = 'desc';
 
     const STOPWORDS_COMMON = new Set([
         'official','video','music','mv','the','and','for','with','from','feat','live','of','in','on',
@@ -861,7 +883,7 @@
         }
     }
 
-    // 🔗 현재 검색어 기준으로 유튜브 / 인스타 / 틱톡 링크 업데이트
+    // 소셜 링크
     function updateSocialLinks(keyword) {
         const row = document.getElementById('social-link-row');
         const yt  = document.getElementById('ytLink');
@@ -893,7 +915,6 @@
         const apiStatusP = document.getElementById('api-status');
         const apiConnBadge = document.getElementById('api-conn-badge');
 
-        // 🔗 소셜 링크 업데이트
         updateSocialLinks(keyword);
 
         if (!API_KEY) {
@@ -1310,13 +1331,13 @@
         updateTrendKeywords(entries);
     }
 
-    // 🔥 채널 랭킹용: 카테고리 이름
+    // 카테고리 라벨
     function getVideoCategoryLabel(catId) {
         if (!catId) return '기타';
         return VIDEO_CATEGORY_LABELS[catId] || '기타';
     }
 
-    // 🔥 채널 랭킹 데이터 생성
+    // 채널 랭킹 기초 데이터(정렬 전)
     function buildChannelRankingFromVideos(videos) {
         const channelAgg = new Map();
         videos.forEach(v => {
@@ -1363,22 +1384,20 @@
             result.push(obj);
         });
 
-        // 합산 조회수 기준 내림차순 정렬
-        result.sort((a, b) => b.totalViews - a.totalViews);
-        return result.slice(0, 30); // TOP 30만
+        return result;
     }
 
-    function renderChannelRanking(ranking) {
+    function renderChannelRanking(sortedList) {
         const listEl = document.getElementById('channel-rank-list');
         if (!listEl) return;
 
         listEl.innerHTML = '';
-        if (!ranking || !ranking.length) {
+        if (!sortedList || !sortedList.length) {
             listEl.innerHTML = '<li><span class="text-muted">채널 랭킹을 계산할 데이터가 없습니다.</span></li>';
             return;
         }
 
-        ranking.forEach((ch, idx) => {
+        sortedList.forEach((ch, idx) => {
             const li = document.createElement('li');
 
             const a = document.createElement('a');
@@ -1419,9 +1438,25 @@
         });
     }
 
+    function sortAndRenderChannelRanking() {
+        const base = (currentChannelRankingRaw || []).slice();
+        if (!base.length) {
+            renderChannelRanking([]);
+            return;
+        }
+        base.sort((a, b) => {
+            if (channelRankOrder === 'asc') {
+                return a.totalViews - b.totalViews;
+            }
+            return b.totalViews - a.totalViews;
+        });
+        const top = base.slice(0, 50); // TOP 50
+        renderChannelRanking(top);
+    }
+
     function updateChannelRankingFromList(videos) {
         const infoEl = document.getElementById('channel-rank-info');
-        const ranking = buildChannelRankingFromVideos(videos || []);
+        currentChannelRankingRaw = buildChannelRankingFromVideos(videos || []);
         if (infoEl) {
             if (!videos || !videos.length) {
                 infoEl.textContent = '채널 데이터를 계산할 영상이 없습니다.';
@@ -1429,10 +1464,10 @@
                 infoEl.textContent = '현재 표시 중인 영상 기준으로 집계됩니다.';
             }
         }
-        renderChannelRanking(ranking);
+        sortAndRenderChannelRanking();
     }
 
-    // ⭐ 즐겨찾기 관련 함수들
+    // 즐겨찾기
     function loadFavorites() {
         try {
             const raw = window.localStorage.getItem('ytTrendFavorites');
@@ -1486,7 +1521,6 @@
             wrapper.appendChild(groupDiv);
         });
 
-        // 클릭 이벤트(검색)
         wrapper.querySelectorAll('.fav-group-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const name = btn.getAttribute('data-group');
@@ -1499,7 +1533,6 @@
             });
         });
 
-        // 삭제 이벤트
         wrapper.querySelectorAll('.fav-group-del').forEach(btn => {
             btn.addEventListener('click', () => {
                 const name = btn.getAttribute('data-group');
@@ -1522,7 +1555,7 @@
             document.getElementById('category-title').textContent = this.textContent.trim();
             document.getElementById('searchInput').value = '';
             currentSearchKeyword = '';
-            updateSocialLinks(''); // 카테고리 바꿀 때 검색어 리셋
+            updateSocialLinks('');
 
             if (currentCategory === 'Live') {
                 fetchLiveVideos();
@@ -1625,6 +1658,17 @@
         });
     });
 
+    // 채널 랭킹 정렬 버튼
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('channel-sort-button')) {
+            const order = e.target.getAttribute('data-order') || 'desc';
+            channelRankOrder = order;
+            document.querySelectorAll('.channel-sort-button').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            sortAndRenderChannelRanking();
+        }
+    });
+
     // 검색 버튼
     document.getElementById('searchBtn').addEventListener('click', () => {
         const keyword = document.getElementById('searchInput').value.trim();
@@ -1650,7 +1694,6 @@
         updateTrendRegionInfo();
         fetchPopularVideos(CATEGORIES[currentCategory]);
 
-        // 즐겨찾기 추가 버튼 이벤트
         const addFavBtn = document.getElementById('addFavBtn');
         if (addFavBtn) {
             addFavBtn.addEventListener('click', () => {
