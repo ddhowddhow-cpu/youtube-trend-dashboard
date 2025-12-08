@@ -547,6 +547,24 @@
         if (data.error) throw { ytError: data.error };
         return data.items || [];
     }
+    // Music 카테고리 최적화: search API로 최근 영상 필터링 지원
+    async function fetchMusicVideos(regionCode, categoryId, timeConfig) {
+        const { after, before } = timeConfig;
+        let searchUrl = `${BASE_URL}search?part=snippet&type=video&maxResults=50&order=viewCount&regionCode=${regionCode}&videoCategoryId=${categoryId}&key=${API_KEY}`;
+        if (after) searchUrl += `&publishedAfter=${after.toISOString()}`;
+        if (before) searchUrl += `&publishedBefore=${before.toISOString()}`;
+        const searchResp = await fetch(searchUrl);
+        const searchData = await searchResp.json();
+        if (searchData.error) throw { ytError: searchData.error };
+        const items = searchData.items || [];
+        if (items.length === 0) return [];
+        const videoIds = items.map(it => it.id && it.id.videoId).filter(Boolean);
+        const videosUrl = `${BASE_URL}videos?part=snippet,contentDetails,statistics&id=${videoIds.join(',')}&key=${API_KEY}`;
+        const videosResp = await fetch(videosUrl);
+        const videosData = await videosResp.json();
+        if (videosData.error) throw { ytError: videosData.error };
+        return videosData.items || [];
+    }
     async function fetchPopularVideos(categoryId) {
         const videoListDiv = document.getElementById('video-list');
         const apiStatusP = document.getElementById('api-status');
@@ -563,10 +581,12 @@
         apiConnBadge.className = 'badge bg-warning text-dark';
         apiConnBadge.textContent = '요청 중...';
         const { regionCode } = getRegionAndLanguage();
+        const timeConfig = getTimeRangeConfig();
         updateTrendRegionInfo();
         try {
             let allItems = [];
             if (!categoryId) {
+                // All: 기존 mostPopular 병렬 호출
                 const results = await Promise.allSettled(
                     ALL_CATEGORY_IDS.map(id => fetchMostPopularForCategory(regionCode, id))
                 );
@@ -582,7 +602,11 @@
                     }
                 });
                 if (allItems.length === 0 && firstError) throw firstError;
+            } else if (categoryId === '10' && timeConfig.after) {
+                // Music + 최근 필터: search API 사용으로 최적화
+                allItems = await fetchMusicVideos(regionCode, categoryId, timeConfig);
             } else {
+                // 기타 카테고리: 기존 mostPopular
                 const arr = await fetchMostPopularForCategory(regionCode, categoryId);
                 allItems = allItems.concat(arr);
             }
@@ -614,12 +638,16 @@
             });
             let withinRange = filterVideosByTimeRange(combinedItems);
             const timeInfoEl = document.getElementById('time-info');
-            const { label } = getTimeRangeConfig();
+            const { label } = timeConfig;
             if (withinRange.length === 0) {
                 withinRange = combinedItems;
                 if (timeInfoEl) {
-                    timeInfoEl.textContent =
-                        '⚠️ 선택한 기간에 해당하는 인기 영상이 거의 없어 전체 인기 영상 목록을 표시합니다.';
+                    if (categoryId === '10') {
+                        timeInfoEl.textContent = '⚠️ 최근 Music 트렌드가 적어 전체 인기 영상 목록을 표시합니다. (신곡 업데이트 확인)';
+                    } else {
+                        timeInfoEl.textContent =
+                            '⚠️ 선택한 기간에 해당하는 인기 영상이 거의 없어 전체 인기 영상 목록을 표시합니다.';
+                    }
                 }
             } else {
                 if (timeInfoEl) {
