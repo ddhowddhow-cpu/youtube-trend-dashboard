@@ -8,7 +8,6 @@
     <link rel="icon" href="data:;base64,=">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-
     <style>
         body {
             font-family: 'Noto Sans KR', sans-serif;
@@ -64,7 +63,6 @@
         .badge-views { background-color: #008080; color: white; }
         .badge-likes { background-color: #ffd700; color: #212529; }
         .badge-comments { background-color: #6a5acd; color: white; }
-
         .badge-velocity {
             background-color: #20c997;
             color: white;
@@ -77,7 +75,6 @@
             background-color: #4dabf7;
             color: white;
         }
-
         .category-button {
             border-radius: 20px;
             margin: 5px;
@@ -98,7 +95,6 @@
         .filter-bar .btn-group + .btn-group {
             margin-left: 8px;
         }
-
         .trend-box {
             background-color: #ffffff;
             border-radius: 8px;
@@ -143,7 +139,6 @@
             background-color: #f1f3f5;
             color: #495057;
         }
-
         /* 즐겨찾기 영역 */
         .favorite-section {
             background-color: #fff;
@@ -157,14 +152,12 @@
             font-weight: 700;
             margin-bottom: 4px;
         }
-
         .social-link-row small {
             font-size: 0.75rem;
         }
     </style>
 </head>
 <body>
-
 <div class="container-fluid header">
     <div class="row align-items-center">
         <div class="col-md-3 text-center">
@@ -177,7 +170,6 @@
                 <input id="searchInput" type="text" class="form-control" placeholder="제목/채널/키워드 검색 (예: 여캠, 태연)">
                 <button id="searchBtn" class="btn btn-primary">검색</button>
             </div>
-
             <!-- 언어 / 지역 선택 -->
             <div class="mt-2">
                 <span class="text-muted me-3">언어 / 지역 선택:</span>
@@ -194,7 +186,6 @@
                     <label class="form-check-label" for="langJP">🇯🇵 일본</label>
                 </div>
             </div>
-
             <!-- 🔗 유튜브 / 인스타 / 틱톡 소셜 검색 링크 -->
             <div class="mt-2 social-link-row" id="social-link-row" style="display:none;">
                 <div class="row g-1">
@@ -219,24 +210,20 @@
                 </small>
             </div>
         </div>
-
         <!-- API 키 영역 -->
         <div class="col-md-3 text-center">
             <p>API 연동 상태: <span id="api-conn-badge" class="badge bg-secondary">API 키 미등록</span></p>
-
             <div class="input-group input-group-sm mb-2">
                 <input id="apiKeyInput" type="password" class="form-control" placeholder="본인 YouTube API 키 입력">
                 <button id="saveApiKeyBtn" class="btn btn-outline-primary">저장/변경</button>
                 <button id="clearApiKeyBtn" class="btn btn-outline-danger">해제</button>
             </div>
             <small id="apiKeyStatus" class="text-muted d-block">
-                이 브라우저(PC/브라우저)에 저장된 본인 API 키를 사용 중입니다.
+                이 브라우저 세션에 저장된 본인 API 키를 사용 중입니다.
             </small>
         </div>
     </div>
-
     <hr>
-
     <!-- 카테고리 버튼 -->
     <div class="text-center">
         <button class="btn btn-outline-danger category-button active" data-category="All">📌 전체 영상</button>
@@ -249,7 +236,6 @@
         <button class="btn btn-outline-secondary category-button" data-category="News">📰 뉴스/정치</button>
         <button class="btn btn-outline-secondary category-button" data-category="Live">📡 라이브</button>
     </div>
-
     <!-- 필터 바 -->
     <div class="text-center filter-bar">
         <!-- 길이 필터 -->
@@ -259,7 +245,6 @@
             <button class="btn btn-outline-dark duration-button" data-duration="mid">1~10분</button>
             <button class="btn btn-outline-dark duration-button" data-duration="long">10분 이상</button>
         </div>
-
         <!-- 정렬 필터 -->
         <div class="btn-group btn-group-sm" role="group" aria-label="View sort">
             <button class="btn btn-outline-secondary sort-button active" data-sort="viewsDesc">조회수 높은 순</button>
@@ -267,7 +252,6 @@
             <button class="btn btn-outline-secondary sort-button" data-sort="viewsPerHourDesc">조회 속도 순</button>
             <button class="btn btn-outline-secondary sort-button" data-sort="likeRateDesc">좋아요율 순</button>
         </div>
-
         <!-- 기간 필터 -->
         <div class="btn-group btn-group-sm" role="group" aria-label="Time range filter">
             <button class="btn btn-outline-secondary time-range-button active" data-range="r1">최근 48시간</button>
@@ -278,42 +262,35 @@
             <button class="btn btn-outline-secondary time-range-button" data-range="r6">1년 이상</button>
         </div>
     </div>
-
     <!-- 구독자 필터 -->
     <div class="text-center mt-2">
         <span class="text-muted me-2">구독자 수 필터:</span>
-
         <div class="form-check form-check-inline">
             <input class="form-check-input subscriber-filter-checkbox" type="checkbox"
                    id="subFilterAll" data-range="all" checked>
             <label class="form-check-label" for="subFilterAll">전체</label>
         </div>
-
         <div class="form-check form-check-inline">
             <input class="form-check-input subscriber-filter-checkbox" type="checkbox"
                    id="subFilter1_1000" data-range="sub_1_1000">
             <label class="form-check-label" for="subFilter1_1000">1 ~ 1,000명</label>
         </div>
-
         <div class="form-check form-check-inline">
             <input class="form-check-input subscriber-filter-checkbox" type="checkbox"
                    id="subFilter1000_10000" data-range="sub_1000_10000">
             <label class="form-check-label" for="subFilter1000_10000">1,000 ~ 1만명</label>
         </div>
-
         <div class="form-check form-check-inline">
             <input class="form-check-input subscriber-filter-checkbox" type="checkbox"
                    id="subFilter10000_40000" data-range="sub_10000_40000">
             <label class="form-check-label" for="subFilter10000_40000">1만 ~ 4만명</label>
         </div>
-
         <div class="form-check form-check-inline">
             <input class="form-check-input subscriber-filter-checkbox" type="checkbox"
                    id="subFilter50000_plus" data-range="sub_50000_plus">
             <label class="form-check-label" for="subFilter50000_plus">5만 이상</label>
         </div>
     </div>
-
     <!-- ⭐ 즐겨찾기 영역 -->
     <div class="container mt-2">
         <div class="favorite-section">
@@ -337,7 +314,6 @@
         </div>
     </div>
 </div>
-
 <!-- 메인 컨텐츠 -->
 <div class="container main-content">
     <div class="row">
@@ -348,7 +324,6 @@
             <p class="text-muted" id="time-info">기준: 최근 48시간 이내 업로드된 인기 영상만 표시 (가능한 경우)</p>
             <div class="row" id="video-list"></div>
         </div>
-
         <!-- 오른쪽: 트렌드 키워드만 -->
         <div class="col-lg-4 col-md-4">
             <div class="trend-box">
@@ -366,13 +341,10 @@
         </div>
     </div>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
     let API_KEY = null;
     const BASE_URL = 'https://www.googleapis.com/youtube/v3/';
-
     const CATEGORIES = {
         'All': '',
         'Music': '10',
@@ -385,7 +357,6 @@
         'Live': 'LIVE'
     };
     const ALL_CATEGORY_IDS = ['10','24','17','22','27','28','25'];
-
     let currentCategory = 'All';
     let currentBaseVideos = [];
     let currentChannelStatsMap = {};
@@ -395,10 +366,8 @@
     let currentTrendKeywords = [];
     let currentSubscriberRanges = new Set(['all']);
     let currentTimeRange = 'r1';
-
     // 즐겨찾기 그룹
     let favoriteGroups = {};
-
     const STOPWORDS_COMMON = new Set([
         'official','video','music','mv','the','and','for','with','from','feat','live','of','in','on',
         '방송','영상','공식','채널','티비','tv','full','ver','version','officialmv','shorts','쇼츠',
@@ -416,7 +385,6 @@
         'の','に','を','が','と','で','です','ます','する','した','して','から','まで','さん','ちゃん',
         'くん','公式','映像'
     ]);
-
     function formatNumberKR(num) {
         if (num == null || isNaN(num)) return '0';
         num = Number(num);
@@ -436,20 +404,18 @@
         return num.toString();
     }
     function formatNumber(num) { return formatNumberKR(num); }
-
     function timeAgo(publishedAt) {
         const now = new Date();
         const published = new Date(publishedAt);
         const diffMs = now - published;
         const diffMinutes = Math.floor(diffMs / (1000 * 60));
-        const diffHours   = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
         if (diffMinutes < 1) return '방금 전';
-        if (diffHours < 1)   return `${diffMinutes}분 전`;
-        if (diffHours < 48)  return `${diffHours}시간 전`;
+        if (diffHours < 1) return `${diffMinutes}분 전`;
+        if (diffHours < 48) return `${diffHours}시간 전`;
         const diffDays = Math.floor(diffHours / 24);
         return `${diffDays}일 전`;
     }
-
     function parseDurationSeconds(iso) {
         if (!iso) return 0;
         const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
@@ -467,7 +433,6 @@
         if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
         return `${m}:${String(s).padStart(2, '0')}`;
     }
-
     function getRegionAndLanguage() {
         const kr = document.getElementById('langKR').checked;
         const en = document.getElementById('langEN').checked;
@@ -477,7 +442,6 @@
         if (jp) return { regionCode: 'JP', relevanceLanguage: 'ja' };
         return { regionCode: 'KR', relevanceLanguage: 'ko' };
     }
-
     // 기간 설정
     function getTimeRangeConfig() {
         const now = new Date();
@@ -510,18 +474,17 @@
             return true;
         });
     }
-
     function loadApiKey() {
         const apiConnBadge = document.getElementById('api-conn-badge');
         const apiKeyStatus = document.getElementById('apiKeyStatus');
-        const apiKeyInput  = document.getElementById('apiKeyInput');
+        const apiKeyInput = document.getElementById('apiKeyInput');
         try {
-            const savedKey = window.localStorage.getItem('ytTrendApiKey');
-            if (savedKey) {
-                API_KEY = savedKey;
+            const encodedKey = window.sessionStorage.getItem('ytTrendApiKey');
+            if (encodedKey) {
+                API_KEY = atob(encodedKey);
                 apiConnBadge.className = 'badge bg-success';
                 apiConnBadge.textContent = 'API 키 등록됨';
-                apiKeyStatus.textContent = '이 브라우저에 저장된 본인 API 키를 사용 중입니다.';
+                apiKeyStatus.textContent = '이 브라우저 세션에 저장된 본인 API 키를 사용 중입니다.';
                 if (apiKeyInput) apiKeyInput.value = '';
             } else {
                 API_KEY = null;
@@ -530,25 +493,26 @@
                 apiKeyStatus.textContent = '상단 입력창에 본인 API 키를 저장해 주세요.';
             }
         } catch (e) {
-            console.warn('localStorage 접근 불가:', e);
+            console.warn('sessionStorage 접근 불가:', e);
             API_KEY = null;
             apiConnBadge.className = 'badge bg-secondary';
             apiConnBadge.textContent = '스토리지 접근 불가';
             apiKeyStatus.textContent = '브라우저 설정 때문에 API 키가 저장되지 않습니다.';
         }
     }
-
     function saveApiKey() {
         const apiKeyInput = document.getElementById('apiKeyInput');
         const newKey = apiKeyInput.value.trim();
         if (!newKey) { alert('API 키를 입력해 주세요.'); return; }
         API_KEY = newKey;
-        try { window.localStorage.setItem('ytTrendApiKey', newKey); } catch(e) {}
+        try { 
+            window.sessionStorage.setItem('ytTrendApiKey', btoa(newKey)); 
+        } catch(e) {}
         loadApiKey();
-        alert('API 키가 저장/변경되었습니다.');
+        alert('API 키가 저장/변경되었습니다. (세션 유지)');
     }
     function clearApiKey() {
-        try { window.localStorage.removeItem('ytTrendApiKey'); } catch(e) {}
+        try { window.sessionStorage.removeItem('ytTrendApiKey'); } catch(e) {}
         API_KEY = null;
         loadApiKey();
         document.getElementById('video-list').innerHTML = '';
@@ -557,7 +521,6 @@
             '<li><span class="trend-keyword">API 키를 먼저 등록해 주세요.</span></li>';
         alert('API 키가 해제되었습니다.');
     }
-
     function getFriendlyErrorMessage(errorObj, contextText) {
         const reason = errorObj?.errors?.[0]?.reason || '';
         const message = errorObj?.message || '';
@@ -576,7 +539,6 @@
                 return `${prefix}<br>(${message || '알 수 없는 오류입니다.'})`;
         }
     }
-
     async function fetchMostPopularForCategory(regionCode, categoryId) {
         let url = `${BASE_URL}videos?part=snippet,contentDetails,statistics&chart=mostPopular&regionCode=${regionCode}&maxResults=50&key=${API_KEY}`;
         if (categoryId) url += `&videoCategoryId=${categoryId}`;
@@ -585,12 +547,10 @@
         if (data.error) throw { ytError: data.error };
         return data.items || [];
     }
-
     async function fetchPopularVideos(categoryId) {
         const videoListDiv = document.getElementById('video-list');
         const apiStatusP = document.getElementById('api-status');
         const apiConnBadge = document.getElementById('api-conn-badge');
-
         if (!API_KEY) {
             videoListDiv.innerHTML = '';
             apiStatusP.textContent = '먼저 상단에서 본인 YouTube API 키를 등록해 주세요.';
@@ -598,18 +558,14 @@
             apiConnBadge.textContent = 'API 키 미등록';
             return;
         }
-
         videoListDiv.innerHTML = '';
         apiStatusP.textContent = '데이터를 불러오는 중입니다...';
         apiConnBadge.className = 'badge bg-warning text-dark';
         apiConnBadge.textContent = '요청 중...';
-
         const { regionCode } = getRegionAndLanguage();
         updateTrendRegionInfo();
-
         try {
             let allItems = [];
-
             if (!categoryId) {
                 const results = await Promise.allSettled(
                     ALL_CATEGORY_IDS.map(id => fetchMostPopularForCategory(regionCode, id))
@@ -630,7 +586,6 @@
                 const arr = await fetchMostPopularForCategory(regionCode, categoryId);
                 allItems = allItems.concat(arr);
             }
-
             if (allItems.length === 0) {
                 currentBaseVideos = [];
                 currentChannelStatsMap = {};
@@ -645,7 +600,6 @@
                 currentSearchKeyword = '';
                 return;
             }
-
             // 영상 중복 제거
             const uniqueMap = new Map();
             allItems.forEach(v => {
@@ -653,17 +607,14 @@
                 if (!uniqueMap.has(vid)) uniqueMap.set(vid, v);
             });
             let combinedItems = Array.from(uniqueMap.values());
-
             combinedItems.sort((a, b) => {
                 const va = parseInt(a.statistics?.viewCount || '0', 10);
                 const vb = parseInt(b.statistics?.viewCount || '0', 10);
                 return vb - va;
             });
-
             let withinRange = filterVideosByTimeRange(combinedItems);
             const timeInfoEl = document.getElementById('time-info');
             const { label } = getTimeRangeConfig();
-
             if (withinRange.length === 0) {
                 withinRange = combinedItems;
                 if (timeInfoEl) {
@@ -676,12 +627,10 @@
                         `기준: ${label} 업로드된 인기 영상만 표시 중입니다.`;
                 }
             }
-
             currentBaseVideos = withinRange;
             currentSearchKeyword = '';
             const channelStatsMap = await fetchChannelStats(withinRange);
             currentChannelStatsMap = channelStatsMap;
-
             updateVideoListAndStatus();
             buildAndRenderTrendKeywords();
             apiConnBadge.className = 'badge bg-success';
@@ -699,12 +648,10 @@
             updateTrendKeywords([]);
         }
     }
-
     async function fetchLiveVideos() {
         const videoListDiv = document.getElementById('video-list');
         const apiStatusP = document.getElementById('api-status');
         const apiConnBadge = document.getElementById('api-conn-badge');
-
         if (!API_KEY) {
             videoListDiv.innerHTML = '';
             apiStatusP.textContent = '먼저 상단에서 본인 YouTube API 키를 등록해 주세요.';
@@ -712,25 +659,20 @@
             apiConnBadge.textContent = 'API 키 미등록';
             return;
         }
-
         videoListDiv.innerHTML = '';
         apiStatusP.textContent = '라이브 방송을 불러오는 중입니다...';
         apiConnBadge.className = 'badge bg-warning text-dark';
         apiConnBadge.textContent = '요청 중...';
-
         const { regionCode } = getRegionAndLanguage();
         updateTrendRegionInfo();
-
         try {
             const searchUrl =
                 `${BASE_URL}search?part=snippet&type=video&maxResults=50` +
                 `&order=viewCount&regionCode=${regionCode}` +
                 `&eventType=live&key=${API_KEY}`;
-
             const searchResp = await fetch(searchUrl);
             const searchData = await searchResp.json();
             if (searchData.error) throw { ytError: searchData.error };
-
             const items = searchData.items || [];
             if (items.length === 0) {
                 currentBaseVideos = [];
@@ -744,35 +686,27 @@
                 currentSearchKeyword = '';
                 return;
             }
-
             const videoIds = items
                 .map(it => it.id && it.id.videoId)
                 .filter(Boolean);
-
             const videosUrl =
                 `${BASE_URL}videos?part=snippet,contentDetails,statistics` +
                 `&id=${videoIds.join(',')}&key=${API_KEY}`;
             const videosResp = await fetch(videosUrl);
             const videosData = await videosResp.json();
             if (videosData.error) throw { ytError: videosData.error };
-
             let videoItems = videosData.items || [];
-
             videoItems.sort((a, b) => {
                 const va = parseInt(a.statistics?.viewCount || '0', 10);
                 const vb = parseInt(b.statistics?.viewCount || '0', 10);
                 return vb - va;
             });
-
             currentBaseVideos = videoItems;
             currentSearchKeyword = '';
-
             const channelStatsMap = await fetchChannelStats(videoItems);
             currentChannelStatsMap = channelStatsMap;
-
             document.getElementById('time-info').textContent =
                 '기준: 현재 라이브 방송 중인 영상(조회수 높은 순)을 표시합니다. (기간 필터는 라이브에는 적용되지 않습니다)';
-
             updateVideoListAndStatus();
             buildAndRenderTrendKeywords();
             apiConnBadge.className = 'badge bg-success';
@@ -793,15 +727,13 @@
             updateTrendKeywords([]);
         }
     }
-
     // 🔗 소셜 링크
     function updateSocialLinks(keyword) {
         const row = document.getElementById('social-link-row');
-        const yt  = document.getElementById('ytLink');
-        const ig  = document.getElementById('igLink');
-        const tt  = document.getElementById('ttLink');
+        const yt = document.getElementById('ytLink');
+        const ig = document.getElementById('igLink');
+        const tt = document.getElementById('ttLink');
         if (!row || !yt || !ig || !tt) return;
-
         const trimmed = (keyword || '').trim();
         if (!trimmed) {
             row.style.display = 'none';
@@ -810,24 +742,18 @@
             tt.removeAttribute('href');
             return;
         }
-
         const tag = trimmed.replace(/^#/, '');
         const encoded = encodeURIComponent(tag);
-
         yt.href = `https://www.youtube.com/results?search_query=${encoded}`;
         ig.href = `https://www.instagram.com/explore/tags/${encoded}/`;
         tt.href = `https://www.tiktok.com/tag/${encoded}`;
-
         row.style.display = 'block';
     }
-
     async function searchVideosByKeyword(keyword) {
         const videoListDiv = document.getElementById('video-list');
         const apiStatusP = document.getElementById('api-status');
         const apiConnBadge = document.getElementById('api-conn-badge');
-
         updateSocialLinks(keyword);
-
         if (!API_KEY) {
             videoListDiv.innerHTML = '';
             apiStatusP.textContent = '먼저 상단에서 본인 YouTube API 키를 등록해 주세요.';
@@ -835,34 +761,27 @@
             apiConnBadge.textContent = 'API 키 미등록';
             return;
         }
-
         videoListDiv.innerHTML = '';
         apiStatusP.textContent = `"${keyword}" 검색 중...`;
         apiConnBadge.className = 'badge bg-warning text-dark';
         apiConnBadge.textContent = '검색 중...';
-
         const { regionCode } = getRegionAndLanguage();
         updateTrendRegionInfo();
-
         try {
             const { after, before, label } = getTimeRangeConfig();
-
             const categoryId = CATEGORIES[currentCategory] || '';
             let searchBase =
-                `${BASE_URL}search?part=snippet&type=video&maxResults=50&order=viewCount` +
+                `${BASE_URL}search?part=snippet&type=video&maxResults=50&order=relevance` +
                 `&regionCode=${regionCode}&q=${encodeURIComponent(keyword)}&key=${API_KEY}`;
             if (categoryId && currentCategory !== 'Live') searchBase += `&videoCategoryId=${categoryId}`;
-
             let timeQuery = '';
             if (after) timeQuery += `&publishedAfter=${after.toISOString()}`;
             if (before) timeQuery += `&publishedBefore=${before.toISOString()}`;
-
             let searchUrl = searchBase + timeQuery;
             let response = await fetch(searchUrl);
             let searchData = await response.json();
             if (searchData.error) throw { ytError: searchData.error };
             let items = searchData.items || [];
-
             if (items.length === 0 && timeQuery) {
                 searchUrl = searchBase;
                 response = await fetch(searchUrl);
@@ -870,7 +789,6 @@
                 if (searchData.error) throw { ytError: searchData.error };
                 items = searchData.items || [];
             }
-
             if (items.length === 0) {
                 currentBaseVideos = [];
                 currentChannelStatsMap = {};
@@ -883,27 +801,22 @@
                 currentSearchKeyword = keyword;
                 return;
             }
-
             const videoIds = items
                 .map(it => it.id && it.id.videoId)
                 .filter(Boolean);
-
             const videosUrl =
                 `${BASE_URL}videos?part=snippet,contentDetails,statistics&id=${videoIds.join(',')}&key=${API_KEY}`;
             const videosResp = await fetch(videosUrl);
             const videosData = await videosResp.json();
             if (videosData.error) throw { ytError: videosData.error };
-
             let videoItems = videosData.items || [];
             videoItems.sort((a, b) => {
                 const va = parseInt(a.statistics?.viewCount || '0', 10);
                 const vb = parseInt(b.statistics?.viewCount || '0', 10);
                 return vb - va;
             });
-
             let withinRange = filterVideosByTimeRange(videoItems);
             const timeInfoEl = document.getElementById('time-info');
-
             if (withinRange.length === 0) {
                 withinRange = videoItems;
                 if (timeInfoEl) {
@@ -916,12 +829,10 @@
                         `기준: ${label} 업로드된 영상 중 "${keyword}" 관련 인기 영상만 표시 중입니다.`;
                 }
             }
-
             currentBaseVideos = withinRange;
             currentSearchKeyword = keyword;
             const channelStatsMap = await fetchChannelStats(withinRange);
             currentChannelStatsMap = channelStatsMap;
-
             updateVideoListAndStatus();
             buildAndRenderTrendKeywords();
             apiConnBadge.className = 'badge bg-success';
@@ -939,7 +850,6 @@
             updateTrendKeywords([]);
         }
     }
-
     async function fetchChannelStats(videoItems) {
         const channelIds = Array.from(
             new Set(
@@ -947,10 +857,8 @@
             )
         );
         if (channelIds.length === 0) return {};
-
         const CHUNK_SIZE = 50;
         const map = {};
-
         for (let i = 0; i < channelIds.length; i += CHUNK_SIZE) {
             const chunk = channelIds.slice(i, i + CHUNK_SIZE);
             const url = `${BASE_URL}channels?part=statistics&id=${chunk.join(',')}&key=${API_KEY}`;
@@ -976,31 +884,27 @@
         }
         return map;
     }
-
     function matchSubscriberRange(subscribers, rangeKey) {
         if (!subscribers || subscribers <= 0) return false;
         switch (rangeKey) {
-            case 'sub_1_1000':      return subscribers >= 1 && subscribers < 1000;
-            case 'sub_1000_10000':  return subscribers >= 1000 && subscribers < 10000;
+            case 'sub_1_1000': return subscribers >= 1 && subscribers < 1000;
+            case 'sub_1000_10000': return subscribers >= 1000 && subscribers < 10000;
             case 'sub_10000_40000': return subscribers >= 10000 && subscribers < 40000;
-            case 'sub_50000_plus':  return subscribers >= 50000;
-            default:                return true;
+            case 'sub_50000_plus': return subscribers >= 50000;
+            default: return true;
         }
     }
-
     function getFilteredVideos() {
         let list = currentBaseVideos.slice();
-
         if (currentDurationFilter !== 'all' && currentCategory !== 'Live') {
             list = list.filter(v => {
                 const seconds = parseDurationSeconds(v.contentDetails?.duration || '');
                 if (currentDurationFilter === 'short') return seconds > 0 && seconds <= 60;
-                if (currentDurationFilter === 'mid')   return seconds > 60 && seconds <= 600;
-                if (currentDurationFilter === 'long')  return seconds > 600;
+                if (currentDurationFilter === 'mid') return seconds > 60 && seconds <= 600;
+                if (currentDurationFilter === 'long') return seconds > 600;
                 return true;
             });
         }
-
         if (!(currentSubscriberRanges.size === 1 && currentSubscriberRanges.has('all'))) {
             list = list.filter(v => {
                 const subs = currentChannelStatsMap[v.snippet.channelId] || 0;
@@ -1010,7 +914,6 @@
                 return false;
             });
         }
-
         list.sort((a, b) => {
             const va = parseInt(a.statistics?.viewCount || '0', 10);
             const vb = parseInt(b.statistics?.viewCount || '0', 10);
@@ -1024,19 +927,16 @@
             const likeRateB = vb > 0 ? lb / vb : 0;
             const speedA = va / ha;
             const speedB = vb / hb;
-
             switch (currentSortMode) {
-                case 'viewsAsc':         return va - vb;
-                case 'likeRateDesc':     return likeRateB - likeRateA;
+                case 'viewsAsc': return va - vb;
+                case 'likeRateDesc': return likeRateB - likeRateA;
                 case 'viewsPerHourDesc': return speedB - speedA;
                 case 'viewsDesc':
-                default:                 return vb - va;
+                default: return vb - va;
             }
         });
-
         return list;
     }
-
     function updateVideoListAndStatus() {
         const apiStatusP = document.getElementById('api-status');
         const list = getFilteredVideos();
@@ -1050,7 +950,6 @@
             apiStatusP.textContent = `총 ${list.length}개의 영상을 표시합니다.`;
         }
     }
-
     function renderVideoList(videos, channelStatsMap = {}) {
         const videoListDiv = document.getElementById('video-list');
         videoListDiv.innerHTML = '';
@@ -1058,32 +957,25 @@
             videoListDiv.innerHTML += createVideoCard(video, channelStatsMap);
         });
     }
-
     function createVideoCard(video, channelStatsMap) {
         const title = video.snippet.title;
         const channelTitle = video.snippet.channelTitle;
         const channelId = video.snippet.channelId;
         const videoId = video.id;
         const thumbnailUrl = video.snippet.thumbnails.medium.url;
-
         const viewCount = video.statistics.viewCount ? parseInt(video.statistics.viewCount) : 0;
         const likeCount = video.statistics.likeCount ? parseInt(video.statistics.likeCount) : 0;
         const commentCount = video.statistics.commentCount ? parseInt(video.statistics.commentCount) : 0;
         const subscriberCount = channelStatsMap[channelId] || 0;
-
         const publishedAt = video.snippet.publishedAt;
         const timeAgoText = timeAgo(publishedAt);
-
         const publishedDate = new Date(publishedAt);
         const hoursSinceUpload = Math.max((Date.now() - publishedDate.getTime()) / (1000 * 60 * 60), 1 / 60);
         const viewVelocity = viewCount > 0 ? viewCount / hoursSinceUpload : 0;
-
         const likeRate = viewCount > 0 ? (likeCount / viewCount) * 100 : 0;
         const commentRate = viewCount > 0 ? (commentCount / viewCount) * 100 : 0;
-
         const durationSeconds = parseDurationSeconds(video.contentDetails?.duration || '');
         const durationLabel = formatDurationLabel(durationSeconds);
-
         return `
         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
             <div class="video-card">
@@ -1104,21 +996,18 @@
                             : ''
                     }
                 </a>
-
                 <div class="card-body">
                     <h5 class="card-title">${title}</h5>
                     <p class="card-text text-muted mb-1">${channelTitle}</p>
                     <p class="card-text">
                         <span class="badge badge-time">${timeAgoText}</span>
                     </p>
-
                     <div>
                         <span class="stats-badge badge-views">${formatNumber(viewCount)} 조회</span>
                         <span class="stats-badge badge-likes">${formatNumber(likeCount)} 좋아요</span>
                         <span class="stats-badge badge-comments">${formatNumber(commentCount)} 댓글</span>
                         <span class="stats-badge badge-subscribers">${formatNumber(subscriberCount)} 구독</span>
                     </div>
-
                     <div class="mt-1">
                         <span class="stats-badge badge-velocity">
                             ${formatNumber(Math.round(viewVelocity))}회/시간
@@ -1135,7 +1024,6 @@
         </div>
         `;
     }
-
     function tokenizeText(text) {
         if (!text) return [];
         return text.toLowerCase().split(/[^0-9a-zA-Z가-힣ぁ-んァ-ン一-龯]+/g).filter(Boolean);
@@ -1143,24 +1031,23 @@
     function isStopword(token) {
         if (!token) return true;
         if (STOPWORDS_COMMON.has(token)) return true;
-        if (STOPWORDS_KO.has(token))     return true;
-        if (STOPWORDS_EN.has(token))     return true;
-        if (STOPWORDS_JA.has(token))     return true;
+        if (STOPWORDS_KO.has(token)) return true;
+        if (STOPWORDS_EN.has(token)) return true;
+        if (STOPWORDS_JA.has(token)) return true;
         return false;
     }
     function isValidToken(token) {
         if (!token) return false;
         if (token.length < 2) return false;
         if (/^\d+$/.test(token)) return false;
-        if (isStopword(token))   return false;
+        if (isStopword(token)) return false;
         return true;
     }
-
     function buildTrendKeywordsFromVideos(videos) {
         const wordScoreMap = new Map();
         videos.forEach(video => {
             const title = video.snippet.title || '';
-            const tags  = video.snippet.tags || [];
+            const tags = video.snippet.tags || [];
             const views = parseInt(video.statistics?.viewCount || '0', 10);
             const weight = views > 0 ? Math.log10(views + 1) : 1;
             let text = title + ' ' + tags.join(' ') + ' ';
@@ -1177,7 +1064,6 @@
             .sort((a, b) => b.score - a.score);
         return entries.slice(0, 30);
     }
-
     function updateTrendRegionInfo() {
         const { regionCode } = getRegionAndLanguage();
         const infoEl = document.getElementById('trend-region-info');
@@ -1189,18 +1075,15 @@
         const now = new Date();
         el.textContent = `기준: 현재 표시 중인 인기 영상(선택한 기간 기준)에서 자동 추출 · 업데이트 ${now.toLocaleTimeString()}`;
     }
-
     function updateTrendKeywords(keywordEntries) {
         currentTrendKeywords = keywordEntries || [];
         const listEl = document.getElementById('trend-keyword-list');
         if (!listEl) return;
-
         listEl.innerHTML = '';
         if (!currentTrendKeywords.length) {
             listEl.innerHTML = '<li><span class="trend-keyword">트렌드 키워드를 계산할 영상 데이터가 없습니다.</span></li>';
             return;
         }
-
         currentTrendKeywords.forEach((item, idx) => {
             const li = document.createElement('li');
             const spanKeyword = document.createElement('span');
@@ -1231,7 +1114,6 @@
         const entries = buildTrendKeywordsFromVideos(currentBaseVideos);
         updateTrendKeywords(entries);
     }
-
     // 즐겨찾기
     function loadFavorites() {
         try {
@@ -1247,7 +1129,6 @@
         }
         renderFavoriteButtons();
     }
-
     function saveFavorites() {
         try {
             window.localStorage.setItem('ytTrendFavorites', JSON.stringify(favoriteGroups));
@@ -1255,37 +1136,30 @@
             console.warn('즐겨찾기 저장 실패:', e);
         }
     }
-
     function renderFavoriteButtons() {
         const wrapper = document.getElementById('favorite-buttons');
         if (!wrapper) return;
         wrapper.innerHTML = '';
-
         const names = Object.keys(favoriteGroups);
         if (!names.length) {
             wrapper.innerHTML = '<small class="text-muted">등록된 즐겨찾기가 없습니다.</small>';
             return;
         }
-
         names.forEach(name => {
             const groupDiv = document.createElement('div');
             groupDiv.className = 'd-inline-flex align-items-center me-2 mb-1';
-
             const btn = document.createElement('button');
             btn.className = 'btn btn-sm btn-outline-warning me-1 fav-group-btn';
             btn.textContent = `⭐ ${name}`;
             btn.setAttribute('data-group', name);
-
             const delBtn = document.createElement('button');
             delBtn.className = 'btn btn-sm btn-outline-secondary fav-group-del';
             delBtn.textContent = '삭제';
             delBtn.setAttribute('data-group', name);
-
             groupDiv.appendChild(btn);
             groupDiv.appendChild(delBtn);
             wrapper.appendChild(groupDiv);
         });
-
         wrapper.querySelectorAll('.fav-group-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const name = btn.getAttribute('data-group');
@@ -1297,7 +1171,6 @@
                 searchVideosByKeyword(combined);
             });
         });
-
         wrapper.querySelectorAll('.fav-group-del').forEach(btn => {
             btn.addEventListener('click', () => {
                 const name = btn.getAttribute('data-group');
@@ -1309,7 +1182,6 @@
             });
         });
     }
-
     // 카테고리 버튼
     document.querySelectorAll('.category-button').forEach(button => {
         button.addEventListener('click', function() {
@@ -1321,7 +1193,6 @@
             document.getElementById('searchInput').value = '';
             currentSearchKeyword = '';
             updateSocialLinks('');
-
             if (currentCategory === 'Live') {
                 fetchLiveVideos();
             } else {
@@ -1329,7 +1200,6 @@
             }
         });
     });
-
     // 언어 스위치
     ['langKR', 'langEN', 'langJP'].forEach(id => {
         const el = document.getElementById(id);
@@ -1352,7 +1222,6 @@
             }
         });
     });
-
     // 길이 필터
     document.querySelectorAll('.duration-button').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -1362,7 +1231,6 @@
             updateVideoListAndStatus();
         });
     });
-
     // 정렬 필터
     document.querySelectorAll('.sort-button').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -1372,14 +1240,12 @@
             updateVideoListAndStatus();
         });
     });
-
     // 기간 필터
     document.querySelectorAll('.time-range-button').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelector('.time-range-button.active')?.classList.remove('active');
             this.classList.add('active');
             currentTimeRange = this.getAttribute('data-range');
-
             const categoryId = CATEGORIES[currentCategory];
             const keyword = document.getElementById('searchInput').value.trim();
             if (keyword) searchVideosByKeyword(keyword);
@@ -1389,7 +1255,6 @@
             }
         });
     });
-
     // 구독자 필터
     document.querySelectorAll('.subscriber-filter-checkbox').forEach(cb => {
         cb.addEventListener('change', function () {
@@ -1422,7 +1287,6 @@
             updateVideoListAndStatus();
         });
     });
-
     // 검색 버튼
     document.getElementById('searchBtn').addEventListener('click', () => {
         const keyword = document.getElementById('searchInput').value.trim();
@@ -1439,7 +1303,6 @@
     document.getElementById('searchInput').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') document.getElementById('searchBtn').click();
     });
-
     document.addEventListener('DOMContentLoaded', () => {
         loadApiKey();
         loadFavorites();
@@ -1447,14 +1310,12 @@
         document.getElementById('clearApiKeyBtn').addEventListener('click', clearApiKey);
         updateTrendRegionInfo();
         fetchPopularVideos(CATEGORIES[currentCategory]);
-
         const addFavBtn = document.getElementById('addFavBtn');
         if (addFavBtn) {
             addFavBtn.addEventListener('click', () => {
                 const nameInput = document.getElementById('favGroupName');
                 const kwInput = document.getElementById('favKeywords');
                 if (!nameInput || !kwInput) return;
-
                 const name = nameInput.value.trim();
                 const kwStr = kwInput.value.trim();
                 if (!name || !kwStr) {
@@ -1465,19 +1326,16 @@
                     .split(/[,\s]+/)
                     .map(k => k.trim())
                     .filter(k => k.length > 0);
-
                 if (!keywords.length) {
                     alert('소태그 키워드를 하나 이상 입력해 주세요.');
                     return;
                 }
-
                 favoriteGroups[name] = keywords;
                 saveFavorites();
                 renderFavoriteButtons();
                 alert(`"${name}" 즐겨찾기가 저장되었습니다.`);
             });
         }
-
         // 30분마다 자동 새로고침
         setInterval(() => {
             const categoryId = CATEGORIES[currentCategory];
@@ -1491,6 +1349,5 @@
         }, 30 * 60 * 1000);
     });
 </script>
-
 </body>
 </html>
