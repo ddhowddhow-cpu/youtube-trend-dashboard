@@ -476,33 +476,40 @@
     }
 
     /* -----------------------------
-       🔑 API 키 저장/로드/해제 수정버전
+       🔑 API 키 저장/로드/해제 (수정 버전)
     ----------------------------- */
 
-    // API 키 불러오기
+    // API 키 불러오기 (localStorage + sessionStorage 둘 다 확인)
     function loadApiKey() {
         const apiConnBadge = document.getElementById('api-conn-badge');
         const apiKeyStatus = document.getElementById('apiKeyStatus');
         const apiKeyInput = document.getElementById('apiKeyInput');
 
         try {
-            // 👉 그냥 문자열 그대로 사용 (atob/btoa 제거)
-            const savedKey = window.sessionStorage.getItem('ytTrendApiKey');
+            // 예전에 localStorage에 저장해둔 값도 함께 체크
+            const savedKey =
+                (window.sessionStorage.getItem('ytTrendApiKey') ||
+                 window.localStorage.getItem('ytTrendApiKey') || '')
+                    .trim();
 
-            if (savedKey && savedKey.trim() !== '') {
-                API_KEY = savedKey.trim();
+            if (savedKey) {
+                API_KEY = savedKey;
+                console.log('[YT Trend] Loaded API_KEY from storage:', API_KEY ? '(length: ' + API_KEY.length + ')' : '(empty)');
+
                 apiConnBadge.className = 'badge bg-success';
                 apiConnBadge.textContent = 'API 키 등록됨';
-                apiKeyStatus.textContent = '이 브라우저 세션에 저장된 본인 API 키를 사용 중입니다.';
+                apiKeyStatus.textContent = '이 브라우저에 저장된 본인 API 키를 사용 중입니다.';
                 if (apiKeyInput) apiKeyInput.value = '';
             } else {
                 API_KEY = null;
+                console.log('[YT Trend] No API_KEY in storage');
+
                 apiConnBadge.className = 'badge bg-secondary';
                 apiConnBadge.textContent = 'API 키 미등록';
                 apiKeyStatus.textContent = '상단 입력창에 본인 API 키를 저장해 주세요.';
             }
         } catch (e) {
-            console.warn('sessionStorage 접근 불가:', e);
+            console.warn('session/localStorage 접근 불가:', e);
             API_KEY = null;
             apiConnBadge.className = 'badge bg-secondary';
             apiConnBadge.textContent = '스토리지 접근 불가';
@@ -525,19 +532,34 @@
         // 전역 변수에 바로 반영
         API_KEY = newKey;
 
-        // 세션스토리지에도 "그냥 문자열 그대로" 저장
+        // 세션·로컬 스토리지에 문자열 그대로 저장
         try {
             window.sessionStorage.setItem('ytTrendApiKey', newKey);
         } catch (e) {
             console.warn('API 키 세션 저장 실패:', e);
         }
+        try {
+            window.localStorage.setItem('ytTrendApiKey', newKey);
+        } catch (e) {
+            console.warn('API 키 로컬 저장 실패:', e);
+        }
+
+        console.log('[YT Trend] Saved API_KEY:', API_KEY ? '(length: ' + API_KEY.length + ')' : '(empty)');
 
         apiConnBadge.className = 'badge bg-success';
         apiConnBadge.textContent = 'API 키 등록됨';
-        apiKeyStatus.textContent = '이 브라우저 세션에 방금 입력한 API 키를 사용 중입니다.';
+        apiKeyStatus.textContent = '이 브라우저에 방금 입력한 API 키를 사용 중입니다.';
         apiKeyInput.value = '';
 
-        alert('API 키가 저장/변경되었습니다. (세션 유지)');
+        alert('API 키가 저장/변경되었습니다. (이 브라우저에서 유지됩니다)');
+        
+        // 👉 키 저장 후 바로 전체 영상 다시 불러오기
+        const categoryId = CATEGORIES[currentCategory];
+        if (currentCategory === 'Live') {
+            fetchLiveVideos();
+        } else {
+            fetchPopularVideos(categoryId);
+        }
     }
 
     // API 키 해제
@@ -545,8 +567,14 @@
         try {
             window.sessionStorage.removeItem('ytTrendApiKey');
         } catch (e) {
-            console.warn('API 키 제거 실패:', e);
+            console.warn('API 키 세션 제거 실패:', e);
         }
+        try {
+            window.localStorage.removeItem('ytTrendApiKey');
+        } catch (e) {
+            console.warn('API 키 로컬 제거 실패:', e);
+        }
+
         API_KEY = null;
 
         const apiConnBadge = document.getElementById('api-conn-badge');
@@ -933,7 +961,7 @@
         if (channelIds.length === 0) return {};
         const CHUNK_SIZE = 50;
         const map = {};
-        for (let i = 0; i < channelIds.length; i += CHUNK_SIZE) {
+        for (let i = 0; i < channelIds.length; i += CHUNK_SIZE; i++) {
             const chunk = channelIds.slice(i, i + CHUNK_SIZE);
             const url = `${BASE_URL}channels?part=statistics&id=${chunk.join(',')}&key=${API_KEY}`;
             try {
