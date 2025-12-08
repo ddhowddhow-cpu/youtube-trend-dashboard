@@ -160,11 +160,11 @@
 <body>
 <div class="container-fluid header">
     <div class="row align-items-center">
-        <div class="col-md-3 text-center">
+        <div class="col-md-4 text-center">
             <h3>유튜브 트렌드 찾기 제작 : 자돈</h3>
             <p class="text-muted">기간별 인기 영상 분석 · 소셜 태그 탐색</p>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-5">
             <!-- 검색창 -->
             <div class="input-group">
                 <input id="searchInput" type="text" class="form-control" placeholder="제목/채널/키워드 검색 (예: 여캠, 태연)">
@@ -210,16 +210,16 @@
                 </small>
             </div>
         </div>
-        <!-- API 키 영역 -->
+        <!-- API 키 상태(하드코딩 안내) -->
         <div class="col-md-3 text-center">
-            <p>API 연동 상태: <span id="api-conn-badge" class="badge bg-secondary">API 키 미등록</span></p>
-            <div class="input-group input-group-sm mb-2">
-                <input id="apiKeyInput" type="password" class="form-control" placeholder="본인 YouTube API 키 입력">
-                <button id="saveApiKeyBtn" class="btn btn-outline-primary">저장/변경</button>
-                <button id="clearApiKeyBtn" class="btn btn-outline-danger">해제</button>
-            </div>
+            <p>
+                API 연동 상태:
+                <span id="api-conn-badge" class="badge bg-secondary">
+                    코드 내 API_KEY 사용
+                </span>
+            </p>
             <small id="apiKeyStatus" class="text-muted d-block">
-                이 브라우저 세션에 저장된 본인 API 키를 사용 중입니다.
+                이 버전은 <b>script 코드 안에 직접 API 키를 넣어 사용하는</b> 방식입니다.
             </small>
         </div>
     </div>
@@ -343,7 +343,9 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    let API_KEY = null;
+    // 👉 여기 본인 유튜브 Data API v3 키 넣기
+    const API_KEY = 'YOUR_API_KEY_HERE';
+
     const BASE_URL = 'https://www.googleapis.com/youtube/v3/';
     const CATEGORIES = {
         'All': '',
@@ -366,8 +368,8 @@
     let currentTrendKeywords = [];
     let currentSubscriberRanges = new Set(['all']);
     let currentTimeRange = 'r1';
-    // 즐겨찾기 그룹
     let favoriteGroups = {};
+
     const STOPWORDS_COMMON = new Set([
         'official','video','music','mv','the','and','for','with','from','feat','live','of','in','on',
         '방송','영상','공식','채널','티비','tv','full','ver','version','officialmv','shorts','쇼츠',
@@ -385,6 +387,7 @@
         'の','に','を','が','と','で','です','ます','する','した','して','から','まで','さん','ちゃん',
         'くん','公式','映像'
     ]);
+
     function formatNumberKR(num) {
         if (num == null || isNaN(num)) return '0';
         num = Number(num);
@@ -404,6 +407,7 @@
         return num.toString();
     }
     function formatNumber(num) { return formatNumberKR(num); }
+
     function timeAgo(publishedAt) {
         const now = new Date();
         const published = new Date(publishedAt);
@@ -416,6 +420,7 @@
         const diffDays = Math.floor(diffHours / 24);
         return `${diffDays}일 전`;
     }
+
     function parseDurationSeconds(iso) {
         if (!iso) return 0;
         const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
@@ -433,6 +438,7 @@
         if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
         return `${m}:${String(s).padStart(2, '0')}`;
     }
+
     function getRegionAndLanguage() {
         const kr = document.getElementById('langKR').checked;
         const en = document.getElementById('langEN').checked;
@@ -442,7 +448,7 @@
         if (jp) return { regionCode: 'JP', relevanceLanguage: 'ja' };
         return { regionCode: 'KR', relevanceLanguage: 'ko' };
     }
-    // 기간 설정
+
     function getTimeRangeConfig() {
         const now = new Date();
         const hour = 60 * 60 * 1000;
@@ -475,126 +481,6 @@
         });
     }
 
-    /* -----------------------------
-       🔑 API 키 저장/로드/해제 (수정 버전)
-    ----------------------------- */
-
-    // API 키 불러오기 (localStorage + sessionStorage 둘 다 확인)
-    function loadApiKey() {
-        const apiConnBadge = document.getElementById('api-conn-badge');
-        const apiKeyStatus = document.getElementById('apiKeyStatus');
-        const apiKeyInput = document.getElementById('apiKeyInput');
-
-        try {
-            // 예전에 localStorage에 저장해둔 값도 함께 체크
-            const savedKey =
-                (window.sessionStorage.getItem('ytTrendApiKey') ||
-                 window.localStorage.getItem('ytTrendApiKey') || '')
-                    .trim();
-
-            if (savedKey) {
-                API_KEY = savedKey;
-                console.log('[YT Trend] Loaded API_KEY from storage:', API_KEY ? '(length: ' + API_KEY.length + ')' : '(empty)');
-
-                apiConnBadge.className = 'badge bg-success';
-                apiConnBadge.textContent = 'API 키 등록됨';
-                apiKeyStatus.textContent = '이 브라우저에 저장된 본인 API 키를 사용 중입니다.';
-                if (apiKeyInput) apiKeyInput.value = '';
-            } else {
-                API_KEY = null;
-                console.log('[YT Trend] No API_KEY in storage');
-
-                apiConnBadge.className = 'badge bg-secondary';
-                apiConnBadge.textContent = 'API 키 미등록';
-                apiKeyStatus.textContent = '상단 입력창에 본인 API 키를 저장해 주세요.';
-            }
-        } catch (e) {
-            console.warn('session/localStorage 접근 불가:', e);
-            API_KEY = null;
-            apiConnBadge.className = 'badge bg-secondary';
-            apiConnBadge.textContent = '스토리지 접근 불가';
-            apiKeyStatus.textContent = '브라우저 설정 때문에 API 키가 저장되지 않습니다. (입력 후 바로 사용은 가능)';
-        }
-    }
-
-    // API 키 저장
-    function saveApiKey() {
-        const apiKeyInput = document.getElementById('apiKeyInput');
-        const newKey = apiKeyInput.value.trim();
-        const apiConnBadge = document.getElementById('api-conn-badge');
-        const apiKeyStatus = document.getElementById('apiKeyStatus');
-
-        if (!newKey) {
-            alert('API 키를 입력해 주세요.');
-            return;
-        }
-
-        // 전역 변수에 바로 반영
-        API_KEY = newKey;
-
-        // 세션·로컬 스토리지에 문자열 그대로 저장
-        try {
-            window.sessionStorage.setItem('ytTrendApiKey', newKey);
-        } catch (e) {
-            console.warn('API 키 세션 저장 실패:', e);
-        }
-        try {
-            window.localStorage.setItem('ytTrendApiKey', newKey);
-        } catch (e) {
-            console.warn('API 키 로컬 저장 실패:', e);
-        }
-
-        console.log('[YT Trend] Saved API_KEY:', API_KEY ? '(length: ' + API_KEY.length + ')' : '(empty)');
-
-        apiConnBadge.className = 'badge bg-success';
-        apiConnBadge.textContent = 'API 키 등록됨';
-        apiKeyStatus.textContent = '이 브라우저에 방금 입력한 API 키를 사용 중입니다.';
-        apiKeyInput.value = '';
-
-        alert('API 키가 저장/변경되었습니다. (이 브라우저에서 유지됩니다)');
-        
-        // 👉 키 저장 후 바로 전체 영상 다시 불러오기
-        const categoryId = CATEGORIES[currentCategory];
-        if (currentCategory === 'Live') {
-            fetchLiveVideos();
-        } else {
-            fetchPopularVideos(categoryId);
-        }
-    }
-
-    // API 키 해제
-    function clearApiKey() {
-        try {
-            window.sessionStorage.removeItem('ytTrendApiKey');
-        } catch (e) {
-            console.warn('API 키 세션 제거 실패:', e);
-        }
-        try {
-            window.localStorage.removeItem('ytTrendApiKey');
-        } catch (e) {
-            console.warn('API 키 로컬 제거 실패:', e);
-        }
-
-        API_KEY = null;
-
-        const apiConnBadge = document.getElementById('api-conn-badge');
-        const apiKeyStatus = document.getElementById('apiKeyStatus');
-
-        apiConnBadge.className = 'badge bg-secondary';
-        apiConnBadge.textContent = 'API 키 미등록';
-        apiKeyStatus.textContent = '상단 입력창에 본인 API 키를 저장해 주세요.';
-
-        document.getElementById('video-list').innerHTML = '';
-        document.getElementById('api-status').textContent =
-            'API 키가 해제되었습니다. 다시 사용하려면 API 키를 등록해 주세요.';
-        document.getElementById('trend-keyword-list').innerHTML =
-            '<li><span class="trend-keyword">API 키를 먼저 등록해 주세요.</span></li>';
-
-        alert('API 키가 해제되었습니다.');
-    }
-
-    /* ----------------------------- */
-
     function getFriendlyErrorMessage(errorObj, contextText) {
         const reason = errorObj?.errors?.[0]?.reason || '';
         const message = errorObj?.message || '';
@@ -613,6 +499,7 @@
                 return `${prefix}<br>(${message || '알 수 없는 오류입니다.'})`;
         }
     }
+
     async function fetchMostPopularForCategory(regionCode, categoryId) {
         let url = `${BASE_URL}videos?part=snippet,contentDetails,statistics&chart=mostPopular&regionCode=${regionCode}&maxResults=50&key=${API_KEY}`;
         if (categoryId) url += `&videoCategoryId=${categoryId}`;
@@ -621,7 +508,7 @@
         if (data.error) throw { ytError: data.error };
         return data.items || [];
     }
-    // Music 카테고리 최적화: search API로 최근 영상 필터링 지원
+
     async function fetchMusicVideos(regionCode, categoryId, timeConfig) {
         const { after, before } = timeConfig;
         let searchUrl = `${BASE_URL}search?part=snippet&type=video&maxResults=50&order=viewCount&regionCode=${regionCode}&videoCategoryId=${categoryId}&key=${API_KEY}`;
@@ -639,28 +526,32 @@
         if (videosData.error) throw { ytError: videosData.error };
         return videosData.items || [];
     }
+
     async function fetchPopularVideos(categoryId) {
         const videoListDiv = document.getElementById('video-list');
         const apiStatusP = document.getElementById('api-status');
         const apiConnBadge = document.getElementById('api-conn-badge');
-        if (!API_KEY) {
+
+        if (!API_KEY || API_KEY === 'YOUR_API_KEY_HERE') {
             videoListDiv.innerHTML = '';
-            apiStatusP.textContent = '먼저 상단에서 본인 YouTube API 키를 등록해 주세요.';
+            apiStatusP.textContent = '먼저 script 코드 상단의 API_KEY 상수에 본인 YouTube API 키를 넣어 주세요.';
             apiConnBadge.className = 'badge bg-secondary';
-            apiConnBadge.textContent = 'API 키 미등록';
+            apiConnBadge.textContent = 'API 키 없음';
             return;
         }
+
         videoListDiv.innerHTML = '';
         apiStatusP.textContent = '데이터를 불러오는 중입니다...';
         apiConnBadge.className = 'badge bg-warning text-dark';
         apiConnBadge.textContent = '요청 중...';
+
         const { regionCode } = getRegionAndLanguage();
         const timeConfig = getTimeRangeConfig();
         updateTrendRegionInfo();
+
         try {
             let allItems = [];
             if (!categoryId) {
-                // All: 기존 mostPopular 병렬 호출
                 const results = await Promise.allSettled(
                     ALL_CATEGORY_IDS.map(id => fetchMostPopularForCategory(regionCode, id))
                 );
@@ -677,13 +568,12 @@
                 });
                 if (allItems.length === 0 && firstError) throw firstError;
             } else if (categoryId === '10' && timeConfig.after) {
-                // Music + 최근 필터: search API 사용으로 최적화
                 allItems = await fetchMusicVideos(regionCode, categoryId, timeConfig);
             } else {
-                // 기타 카테고리: 기존 mostPopular
                 const arr = await fetchMostPopularForCategory(regionCode, categoryId);
                 allItems = allItems.concat(arr);
             }
+
             if (allItems.length === 0) {
                 currentBaseVideos = [];
                 currentChannelStatsMap = {};
@@ -698,7 +588,7 @@
                 currentSearchKeyword = '';
                 return;
             }
-            // 영상 중복 제거
+
             const uniqueMap = new Map();
             allItems.forEach(v => {
                 const vid = v.id;
@@ -710,9 +600,11 @@
                 const vb = parseInt(b.statistics?.viewCount || '0', 10);
                 return vb - va;
             });
-            let withinRange = filterVideosByTimeRange(combinedItems);
+
             const timeInfoEl = document.getElementById('time-info');
             const { label } = timeConfig;
+            let withinRange = filterVideosByTimeRange(combinedItems);
+
             if (withinRange.length === 0) {
                 withinRange = combinedItems;
                 if (timeInfoEl) {
@@ -729,6 +621,7 @@
                         `기준: ${label} 업로드된 인기 영상만 표시 중입니다.`;
                 }
             }
+
             currentBaseVideos = withinRange;
             currentSearchKeyword = '';
             const channelStatsMap = await fetchChannelStats(withinRange);
@@ -745,28 +638,34 @@
                 apiStatusP.innerHTML =
                     '⚠️ API 호출에 실패했습니다.<br>API 키/쿼터/리퍼러(도메인) 제한을 확인해 주세요.';
             }
+            const apiConnBadge = document.getElementById('api-conn-badge');
             apiConnBadge.className = 'badge bg-danger';
             apiConnBadge.textContent = '오류';
             updateTrendKeywords([]);
         }
     }
+
     async function fetchLiveVideos() {
         const videoListDiv = document.getElementById('video-list');
         const apiStatusP = document.getElementById('api-status');
         const apiConnBadge = document.getElementById('api-conn-badge');
-        if (!API_KEY) {
+
+        if (!API_KEY || API_KEY === 'YOUR_API_KEY_HERE') {
             videoListDiv.innerHTML = '';
-            apiStatusP.textContent = '먼저 상단에서 본인 YouTube API 키를 등록해 주세요.';
+            apiStatusP.textContent = '먼저 script 코드 상단의 API_KEY 상수에 본인 YouTube API 키를 넣어 주세요.';
             apiConnBadge.className = 'badge bg-secondary';
-            apiConnBadge.textContent = 'API 키 미등록';
+            apiConnBadge.textContent = 'API 키 없음';
             return;
         }
+
         videoListDiv.innerHTML = '';
         apiStatusP.textContent = '라이브 방송을 불러오는 중입니다...';
         apiConnBadge.className = 'badge bg-warning text-dark';
         apiConnBadge.textContent = '요청 중...';
+
         const { regionCode } = getRegionAndLanguage();
         updateTrendRegionInfo();
+
         try {
             const searchUrl =
                 `${BASE_URL}search?part=snippet&type=video&maxResults=50` +
@@ -775,6 +674,7 @@
             const searchResp = await fetch(searchUrl);
             const searchData = await searchResp.json();
             if (searchData.error) throw { ytError: searchData.error };
+
             const items = searchData.items || [];
             if (items.length === 0) {
                 currentBaseVideos = [];
@@ -788,6 +688,7 @@
                 currentSearchKeyword = '';
                 return;
             }
+
             const videoIds = items
                 .map(it => it.id && it.id.videoId)
                 .filter(Boolean);
@@ -797,12 +698,14 @@
             const videosResp = await fetch(videosUrl);
             const videosData = await videosResp.json();
             if (videosData.error) throw { ytError: videosData.error };
+
             let videoItems = videosData.items || [];
             videoItems.sort((a, b) => {
                 const va = parseInt(a.statistics?.viewCount || '0', 10);
                 const vb = parseInt(b.statistics?.viewCount || '0', 10);
                 return vb - va;
             });
+
             currentBaseVideos = videoItems;
             currentSearchKeyword = '';
             const channelStatsMap = await fetchChannelStats(videoItems);
@@ -829,6 +732,7 @@
             updateTrendKeywords([]);
         }
     }
+
     // 🔗 소셜 링크
     function updateSocialLinks(keyword) {
         const row = document.getElementById('social-link-row');
@@ -851,24 +755,29 @@
         tt.href = `https://www.tiktok.com/tag/${encoded}`;
         row.style.display = 'block';
     }
+
     async function searchVideosByKeyword(keyword) {
         const videoListDiv = document.getElementById('video-list');
         const apiStatusP = document.getElementById('api-status');
         const apiConnBadge = document.getElementById('api-conn-badge');
         updateSocialLinks(keyword);
-        if (!API_KEY) {
+
+        if (!API_KEY || API_KEY === 'YOUR_API_KEY_HERE') {
             videoListDiv.innerHTML = '';
-            apiStatusP.textContent = '먼저 상단에서 본인 YouTube API 키를 등록해 주세요.';
+            apiStatusP.textContent = '먼저 script 코드 상단의 API_KEY 상수에 본인 YouTube API 키를 넣어 주세요.';
             apiConnBadge.className = 'badge bg-secondary';
-            apiConnBadge.textContent = 'API 키 미등록';
+            apiConnBadge.textContent = 'API 키 없음';
             return;
         }
+
         videoListDiv.innerHTML = '';
         apiStatusP.textContent = `"${keyword}" 검색 중...`;
         apiConnBadge.className = 'badge bg-warning text-dark';
         apiConnBadge.textContent = '검색 중...';
+
         const { regionCode } = getRegionAndLanguage();
         updateTrendRegionInfo();
+
         try {
             const { after, before, label } = getTimeRangeConfig();
             const categoryId = CATEGORIES[currentCategory] || '';
@@ -876,14 +785,17 @@
                 `${BASE_URL}search?part=snippet&type=video&maxResults=50&order=relevance` +
                 `&regionCode=${regionCode}&q=${encodeURIComponent(keyword)}&key=${API_KEY}`;
             if (categoryId && currentCategory !== 'Live') searchBase += `&videoCategoryId=${categoryId}`;
+
             let timeQuery = '';
             if (after) timeQuery += `&publishedAfter=${after.toISOString()}`;
             if (before) timeQuery += `&publishedBefore=${before.toISOString()}`;
             let searchUrl = searchBase + timeQuery;
+
             let response = await fetch(searchUrl);
             let searchData = await response.json();
             if (searchData.error) throw { ytError: searchData.error };
             let items = searchData.items || [];
+
             if (items.length === 0 && timeQuery) {
                 searchUrl = searchBase;
                 response = await fetch(searchUrl);
@@ -891,6 +803,7 @@
                 if (searchData.error) throw { ytError: searchData.error };
                 items = searchData.items || [];
             }
+
             if (items.length === 0) {
                 currentBaseVideos = [];
                 currentChannelStatsMap = {};
@@ -903,6 +816,7 @@
                 currentSearchKeyword = keyword;
                 return;
             }
+
             const videoIds = items
                 .map(it => it.id && it.id.videoId)
                 .filter(Boolean);
@@ -911,14 +825,17 @@
             const videosResp = await fetch(videosUrl);
             const videosData = await videosResp.json();
             if (videosData.error) throw { ytError: videosData.error };
+
             let videoItems = videosData.items || [];
             videoItems.sort((a, b) => {
                 const va = parseInt(a.statistics?.viewCount || '0', 10);
                 const vb = parseInt(b.statistics?.viewCount || '0', 10);
                 return vb - va;
             });
+
             let withinRange = filterVideosByTimeRange(videoItems);
             const timeInfoEl = document.getElementById('time-info');
+
             if (withinRange.length === 0) {
                 withinRange = videoItems;
                 if (timeInfoEl) {
@@ -931,6 +848,7 @@
                         `기준: ${label} 업로드된 영상 중 "${keyword}" 관련 인기 영상만 표시 중입니다.`;
                 }
             }
+
             currentBaseVideos = withinRange;
             currentSearchKeyword = keyword;
             const channelStatsMap = await fetchChannelStats(withinRange);
@@ -952,6 +870,7 @@
             updateTrendKeywords([]);
         }
     }
+
     async function fetchChannelStats(videoItems) {
         const channelIds = Array.from(
             new Set(
@@ -961,7 +880,7 @@
         if (channelIds.length === 0) return {};
         const CHUNK_SIZE = 50;
         const map = {};
-        for (let i = 0; i < channelIds.length; i += CHUNK_SIZE; i++) {
+        for (let i = 0; i < channelIds.length; i += CHUNK_SIZE) {
             const chunk = channelIds.slice(i, i + CHUNK_SIZE);
             const url = `${BASE_URL}channels?part=statistics&id=${chunk.join(',')}&key=${API_KEY}`;
             try {
@@ -986,6 +905,7 @@
         }
         return map;
     }
+
     function matchSubscriberRange(subscribers, rangeKey) {
         if (!subscribers || subscribers <= 0) return false;
         switch (rangeKey) {
@@ -996,6 +916,7 @@
             default: return true;
         }
     }
+
     function getFilteredVideos() {
         let list = currentBaseVideos.slice();
         if (currentDurationFilter !== 'all' && currentCategory !== 'Live') {
@@ -1039,6 +960,7 @@
         });
         return list;
     }
+
     function updateVideoListAndStatus() {
         const apiStatusP = document.getElementById('api-status');
         const list = getFilteredVideos();
@@ -1052,6 +974,7 @@
             apiStatusP.textContent = `총 ${list.length}개의 영상을 표시합니다.`;
         }
     }
+
     function renderVideoList(videos, channelStatsMap = {}) {
         const videoListDiv = document.getElementById('video-list');
         videoListDiv.innerHTML = '';
@@ -1059,6 +982,7 @@
             videoListDiv.innerHTML += createVideoCard(video, channelStatsMap);
         });
     }
+
     function createVideoCard(video, channelStatsMap) {
         const title = video.snippet.title;
         const channelTitle = video.snippet.channelTitle;
@@ -1078,6 +1002,7 @@
         const commentRate = viewCount > 0 ? (commentCount / viewCount) * 100 : 0;
         const durationSeconds = parseDurationSeconds(video.contentDetails?.duration || '');
         const durationLabel = formatDurationLabel(durationSeconds);
+
         return `
         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
             <div class="video-card">
@@ -1126,6 +1051,7 @@
         </div>
         `;
     }
+
     function tokenizeText(text) {
         if (!text) return [];
         return text.toLowerCase().split(/[^0-9a-zA-Z가-힣ぁ-んァ-ン一-龯]+/g).filter(Boolean);
@@ -1145,6 +1071,7 @@
         if (isStopword(token)) return false;
         return true;
     }
+
     function buildTrendKeywordsFromVideos(videos) {
         const wordScoreMap = new Map();
         videos.forEach(video => {
@@ -1166,17 +1093,20 @@
             .sort((a, b) => b.score - a.score);
         return entries.slice(0, 30);
     }
+
     function updateTrendRegionInfo() {
         const { regionCode } = getRegionAndLanguage();
         const infoEl = document.getElementById('trend-region-info');
         if (infoEl) infoEl.textContent = `지역: ${regionCode} 기준`;
     }
+
     function updateTrendUpdatedTime() {
         const el = document.getElementById('trend-updated-time');
         if (!el) return;
         const now = new Date();
         el.textContent = `기준: 현재 표시 중인 인기 영상(선택한 기간 기준)에서 자동 추출 · 업데이트 ${now.toLocaleTimeString()}`;
     }
+
     function updateTrendKeywords(keywordEntries) {
         currentTrendKeywords = keywordEntries || [];
         const listEl = document.getElementById('trend-keyword-list');
@@ -1208,6 +1138,7 @@
         });
         updateTrendUpdatedTime();
     }
+
     function buildAndRenderTrendKeywords() {
         if (!currentBaseVideos || currentBaseVideos.length === 0) {
             updateTrendKeywords([]);
@@ -1216,7 +1147,7 @@
         const entries = buildTrendKeywordsFromVideos(currentBaseVideos);
         updateTrendKeywords(entries);
     }
-    // 즐겨찾기
+
     function loadFavorites() {
         try {
             const raw = window.localStorage.getItem('ytTrendFavorites');
@@ -1284,7 +1215,7 @@
             });
         });
     }
-    // 카테고리 버튼
+
     document.querySelectorAll('.category-button').forEach(button => {
         button.addEventListener('click', function() {
             document.querySelector('.category-button.active')?.classList.remove('active');
@@ -1302,7 +1233,7 @@
             }
         });
     });
-    // 언어 스위치
+
     ['langKR', 'langEN', 'langJP'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
@@ -1324,7 +1255,7 @@
             }
         });
     });
-    // 길이 필터
+
     document.querySelectorAll('.duration-button').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelector('.duration-button.active')?.classList.remove('active');
@@ -1333,7 +1264,7 @@
             updateVideoListAndStatus();
         });
     });
-    // 정렬 필터
+
     document.querySelectorAll('.sort-button').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelector('.sort-button.active')?.classList.remove('active');
@@ -1342,7 +1273,7 @@
             updateVideoListAndStatus();
         });
     });
-    // 기간 필터
+
     document.querySelectorAll('.time-range-button').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelector('.time-range-button.active')?.classList.remove('active');
@@ -1357,7 +1288,7 @@
             }
         });
     });
-    // 구독자 필터
+
     document.querySelectorAll('.subscriber-filter-checkbox').forEach(cb => {
         cb.addEventListener('change', function () {
             const range = this.getAttribute('data-range');
@@ -1389,7 +1320,7 @@
             updateVideoListAndStatus();
         });
     });
-    // 검색 버튼
+
     document.getElementById('searchBtn').addEventListener('click', () => {
         const keyword = document.getElementById('searchInput').value.trim();
         const categoryId = CATEGORIES[currentCategory];
@@ -1402,14 +1333,13 @@
             searchVideosByKeyword(keyword);
         }
     });
+
     document.getElementById('searchInput').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') document.getElementById('searchBtn').click();
     });
+
     document.addEventListener('DOMContentLoaded', () => {
-        loadApiKey();
         loadFavorites();
-        document.getElementById('saveApiKeyBtn').addEventListener('click', saveApiKey);
-        document.getElementById('clearApiKeyBtn').addEventListener('click', clearApiKey);
         updateTrendRegionInfo();
         fetchPopularVideos(CATEGORIES[currentCategory]);
         const addFavBtn = document.getElementById('addFavBtn');
@@ -1438,7 +1368,7 @@
                 alert(`"${name}" 즐겨찾기가 저장되었습니다.`);
             });
         }
-        // 30분마다 자동 새로고침
+
         setInterval(() => {
             const categoryId = CATEGORIES[currentCategory];
             if (currentCategory === 'Live') {
