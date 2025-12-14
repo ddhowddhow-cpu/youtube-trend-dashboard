@@ -20,9 +20,7 @@
             padding: 20px 0;
             margin-bottom: 20px;
         }
-        .main-content {
-            padding: 20px;
-        }
+        .main-content { padding: 20px; }
         .video-card {
             background-color: #ffffff;
             border-radius: 8px;
@@ -31,16 +29,9 @@
             overflow: hidden;
             transition: transform 0.2s;
         }
-        .video-card:hover {
-            transform: translateY(-5px);
-        }
-        .video-card img {
-            width: 100%;
-            height: auto;
-        }
-        .card-body {
-            padding: 15px;
-        }
+        .video-card:hover { transform: translateY(-5px); }
+        .video-card img { width: 100%; height: auto; }
+        .card-body { padding: 15px; }
         .card-title {
             font-size: 1.1rem;
             font-weight: 700;
@@ -145,13 +136,23 @@
         .multi-50  { background-color: #20c997; color: #fff; }
         .multi-100 { background-color: #fd7e14; color: #fff; }
         .multi-200 { background-color: #dc3545; color: #fff; }
+
+        /* ✅ "자돈" 클릭 새로고침 */
+        .brand-reload {
+            cursor: pointer;
+            user-select: none;
+        }
+        .brand-reload:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
 <div class="container-fluid header">
     <div class="row align-items-center">
         <div class="col-md-3 text-center">
-            <h3>유튜브 트렌드 찾기 제작 : 자돈</h3>
+            <!-- ✅ "자돈" 클릭하면 새로고침 -->
+            <h3 id="brandReload" class="brand-reload">유튜브 트렌드 찾기 제작 : 자돈</h3>
             <p class="text-muted">기간별 인기 영상 분석 · 소셜 태그 탐색</p>
         </div>
 
@@ -241,7 +242,6 @@
             <button class="btn btn-outline-secondary sort-button" data-sort="viewsAsc">조회수 낮은 순</button>
             <button class="btn btn-outline-secondary sort-button" data-sort="viewsPerHourDesc">조회 속도 순</button>
             <button class="btn btn-outline-secondary sort-button" data-sort="likeRateDesc">좋아요율 순</button>
-            <!-- ✅ 추가 -->
             <button class="btn btn-outline-danger sort-button" data-sort="viewsPerSubDesc">구독자 대비 조회수</button>
         </div>
 
@@ -325,6 +325,42 @@
                 <ol id="trend-keyword-list" class="trend-list">
                     <li><span class="trend-keyword">데이터 로딩 중...</span></li>
                 </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ 즐겨찾기 편집 모달 -->
+<div class="modal fade" id="favEditModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">⭐ 즐겨찾기 상세/수정</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label class="form-label mb-1">대태그</label>
+                    <input id="favEditName" type="text" class="form-control" placeholder="대태그 이름">
+                    <input id="favEditOldName" type="hidden">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label mb-1">소태그(키워드)</label>
+                    <input id="favEditKeywords" type="text" class="form-control" placeholder="쉼표/띄어쓰기로 구분">
+                    <small class="text-muted">예: 임영웅, 콘서트, 트로트</small>
+                </div>
+                <div class="alert alert-light border mb-0">
+                    <div class="small text-muted mb-1">현재 저장값</div>
+                    <div class="small"><b id="favEditPreviewTitle"></b></div>
+                    <div class="small text-muted" id="favEditPreviewKeywords"></div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button id="favEditDeleteBtn" type="button" class="btn btn-outline-danger">삭제</button>
+                <div class="d-flex gap-2">
+                    <button id="favEditSearchBtn" type="button" class="btn btn-outline-primary">검색 적용</button>
+                    <button id="favEditSaveBtn" type="button" class="btn btn-warning">저장</button>
+                </div>
             </div>
         </div>
     </div>
@@ -532,9 +568,7 @@
 
     function clearApiKey() {
         const st = getStorage();
-        try {
-            if (st) st.removeItem(API_KEY_STORAGE_KEY);
-        } catch (e) { /* ignore */ }
+        try { if (st) st.removeItem(API_KEY_STORAGE_KEY); } catch (e) {}
         _memoryKey = null;
         API_KEY = null;
 
@@ -1016,7 +1050,6 @@
             const speedA = va / ha;
             const speedB = vb / hb;
 
-            // ✅ 구독자 대비 조회수 (조회수/구독자수)
             const subsA = Math.max((currentChannelStatsMap[a.snippet.channelId] || 0), 1);
             const subsB = Math.max((currentChannelStatsMap[b.snippet.channelId] || 0), 1);
             const vpsA = va / subsA;
@@ -1026,7 +1059,7 @@
                 case 'viewsAsc': return va - vb;
                 case 'likeRateDesc': return likeRateB - likeRateA;
                 case 'viewsPerHourDesc': return speedB - speedA;
-                case 'viewsPerSubDesc': return vpsB - vpsA; // ✅ 추가
+                case 'viewsPerSubDesc': return vpsB - vpsA;
                 case 'viewsDesc':
                 default: return vb - va;
             }
@@ -1083,10 +1116,9 @@
         const durationSeconds = parseDurationSeconds(video.contentDetails?.duration || '');
         const durationLabel = formatDurationLabel(durationSeconds);
 
-        // ✅ 구독자 대비 조회수 배수 뱃지 (소수점 X)
         let multiBadgeHtml = '';
         if (subscriberCount > 0 && viewCount > 0) {
-            const multi = Math.floor(viewCount / subscriberCount); // 정수 배수
+            const multi = Math.floor(viewCount / subscriberCount);
 
             let tag = '';
             let cls = '';
@@ -1096,7 +1128,6 @@
             else if (multi >= 50) { tag = '상승각'; cls = 'multi-50'; }
             else if (multi >= 20) { tag = '관심'; cls = 'multi-20'; }
 
-            // 20배 미만은 숨김 (원하면 여기서 표시하게 바꿀 수 있음)
             if (tag) multiBadgeHtml = `<span class="badge-multi ${cls}">x${multi} (${tag})</span>`;
         }
 
@@ -1121,9 +1152,7 @@
                     }
                 </a>
                 <div class="card-body">
-                    <!-- ✅ 맨 위에 배수 뱃지 -->
                     ${multiBadgeHtml ? `<div>${multiBadgeHtml}</div>` : ''}
-
                     <h5 class="card-title">${title}</h5>
                     <p class="card-text text-muted mb-1">${channelTitle}</p>
                     <p class="card-text"><span class="badge badge-time">${timeAgoText}</span></p>
@@ -1248,6 +1277,7 @@
         updateTrendKeywords(buildTrendKeywordsFromVideos(currentBaseVideos));
     }
 
+    // ✅ 즐겨찾기: 로드/저장/렌더
     function loadFavorites() {
         try {
             const raw = window.localStorage.getItem('ytTrendFavorites');
@@ -1265,6 +1295,8 @@
             console.warn('즐겨찾기 저장 실패:', e);
         }
     }
+
+    // ✅ 즐겨찾기 버튼: 클릭하면 "상세/수정 모달" 열기
     function renderFavoriteButtons() {
         const wrapper = document.getElementById('favorite-buttons');
         if (!wrapper) return;
@@ -1299,12 +1331,7 @@
         wrapper.querySelectorAll('.fav-group-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const name = btn.getAttribute('data-group');
-                const keywords = favoriteGroups[name] || [];
-                if (!keywords.length) return;
-                const combined = keywords.join(' ');
-                const searchInput = document.getElementById('searchInput');
-                if (searchInput) searchInput.value = combined;
-                searchVideosByKeyword(combined);
+                openFavoriteModal(name);
             });
         });
 
@@ -1318,6 +1345,95 @@
                 }
             });
         });
+    }
+
+    // ✅ 모달 열기/미리보기
+    function normalizeKeywords(kwStr) {
+        return (kwStr || '').split(/[,\s]+/).map(k => k.trim()).filter(k => k.length > 0);
+    }
+
+    function openFavoriteModal(groupName) {
+        const keywords = favoriteGroups[groupName] || [];
+
+        document.getElementById('favEditOldName').value = groupName;
+        document.getElementById('favEditName').value = groupName;
+        document.getElementById('favEditKeywords').value = keywords.join(', ');
+
+        document.getElementById('favEditPreviewTitle').textContent = `대태그: ${groupName}`;
+        document.getElementById('favEditPreviewKeywords').textContent = `소태그: ${keywords.join(', ')}`;
+
+        const modalEl = document.getElementById('favEditModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+
+        // 입력 바뀔 때 미리보기 갱신
+        const nameInput = document.getElementById('favEditName');
+        const kwInput = document.getElementById('favEditKeywords');
+        const refreshPreview = () => {
+            const n = nameInput.value.trim();
+            const kws = normalizeKeywords(kwInput.value).join(', ');
+            document.getElementById('favEditPreviewTitle').textContent = `대태그: ${n || '(비어있음)'}`;
+            document.getElementById('favEditPreviewKeywords').textContent = `소태그: ${kws || '(비어있음)'}`;
+        };
+        nameInput.oninput = refreshPreview;
+        kwInput.oninput = refreshPreview;
+    }
+
+    function applyFavoriteSearchByModalInputs() {
+        const name = document.getElementById('favEditName').value.trim();
+        const kws = normalizeKeywords(document.getElementById('favEditKeywords').value);
+        if (!name || kws.length === 0) {
+            alert('대태그/소태그를 확인해 주세요.');
+            return;
+        }
+        const combined = kws.join(' ');
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.value = combined;
+        searchVideosByKeyword(combined);
+
+        // 모달 닫기
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('favEditModal')).hide();
+    }
+
+    function saveFavoriteFromModalInputs() {
+        const oldName = document.getElementById('favEditOldName').value.trim();
+        const newName = document.getElementById('favEditName').value.trim();
+        const kws = normalizeKeywords(document.getElementById('favEditKeywords').value);
+
+        if (!newName || kws.length === 0) {
+            alert('대태그 이름과 소태그 키워드를 모두 입력해 주세요.');
+            return;
+        }
+
+        // 이름 변경(리네임) 처리
+        if (oldName && oldName !== newName) {
+            // 같은 이름이 이미 존재하면 덮어쓸지
+            if (favoriteGroups[newName]) {
+                const ok = confirm(`"${newName}" 그룹이 이미 있습니다. 덮어쓸까요?`);
+                if (!ok) return;
+            }
+            delete favoriteGroups[oldName];
+        }
+
+        favoriteGroups[newName] = kws;
+        saveFavorites();
+        renderFavoriteButtons();
+
+        document.getElementById('favEditOldName').value = newName;
+        alert('저장되었습니다.');
+    }
+
+    function deleteFavoriteFromModal() {
+        const oldName = document.getElementById('favEditOldName').value.trim();
+        if (!oldName) return;
+        const ok = confirm(`"${oldName}" 즐겨찾기를 삭제할까요?`);
+        if (!ok) return;
+
+        delete favoriteGroups[oldName];
+        saveFavorites();
+        renderFavoriteButtons();
+
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('favEditModal')).hide();
     }
 
     document.querySelectorAll('.category-button').forEach(button => {
@@ -1450,6 +1566,15 @@
     });
 
     document.addEventListener('DOMContentLoaded', () => {
+        // ✅ 자돈 클릭 새로고침
+        const brand = document.getElementById('brandReload');
+        if (brand) brand.addEventListener('click', () => window.location.reload());
+
+        // ✅ 모달 버튼 이벤트
+        document.getElementById('favEditSearchBtn').addEventListener('click', applyFavoriteSearchByModalInputs);
+        document.getElementById('favEditSaveBtn').addEventListener('click', saveFavoriteFromModalInputs);
+        document.getElementById('favEditDeleteBtn').addEventListener('click', deleteFavoriteFromModal);
+
         loadApiKey();
         loadFavorites();
 
@@ -1474,7 +1599,7 @@
                     return;
                 }
 
-                const keywords = kwStr.split(/[,\s]+/).map(k => k.trim()).filter(k => k.length > 0);
+                const keywords = normalizeKeywords(kwStr);
                 if (!keywords.length) {
                     alert('소태그 키워드를 하나 이상 입력해 주세요.');
                     return;
