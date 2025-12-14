@@ -1,1628 +1,1366 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>유튜브 실시간 트렌드 찾기</title>
-    <!-- 404 방지용 간단 파비콘 -->
-    <link rel="icon" href="data:;base64,=">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            background-color: #f8f9fa;
-            color: #212529;
-        }
-        .header {
-            background-color: #ffffff;
-            border-bottom: 1px solid #dee2e6;
-            padding: 20px 0;
-            margin-bottom: 20px;
-        }
-        .main-content { padding: 20px; }
-        .video-card {
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-            overflow: hidden;
-            transition: transform 0.2s;
-        }
-        .video-card:hover { transform: translateY(-5px); }
-        .video-card img { width: 100%; height: auto; }
-        .card-body { padding: 15px; }
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            height: 4.5em;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-        }
-        .stats-badge {
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 3px 6px;
-            margin-right: 3px;
-            border-radius: 5px;
-            display: inline-block;
-        }
-        .badge-subscribers { background-color: #ff4500; color: white; }
-        .badge-views { background-color: #008080; color: white; }
-        .badge-likes { background-color: #ffd700; color: #212529; }
-        .badge-comments { background-color: #6a5acd; color: white; }
-        .badge-velocity { background-color: #20c997; color: white; }
-        .badge-likeRate { background-color: #ff6f61; color: white; }
-        .badge-commentRate { background-color: #4dabf7; color: white; }
-        .category-button {
-            border-radius: 20px;
-            margin: 5px;
-            font-weight: 700;
-        }
-        .category-button.active {
-            color: #fff !important;
-            background-color: #dc3545 !important;
-        }
-        .badge-time {
-            font-size: 0.8rem;
-            background-color: #e9ecef;
-            color: #495057;
-        }
-        .filter-bar { margin-top: 10px; }
-        .filter-bar .btn-group + .btn-group { margin-left: 8px; }
-        .trend-box {
-            background-color: #ffffff;
-            border-radius: 8px;
-            padding: 12px 16px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
-            max-height: 80vh;
-            overflow-y: auto;
-            font-size: 0.95rem;
-            margin-top: 10px;
-        }
-        .trend-box h5 { font-weight: 700; }
-        .trend-meta { font-size: 0.8rem; }
-        .trend-list { padding-left: 18px; margin-bottom: 0; }
-        .trend-list li {
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .trend-keyword {
-            flex: 1;
-            margin-right: 6px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            cursor: pointer;
-        }
-        .trend-keyword:hover { text-decoration: underline; }
-        .trend-score-badge {
-            font-size: 0.75rem;
-            padding: 2px 6px;
-            border-radius: 10px;
-            background-color: #f1f3f5;
-            color: #495057;
-        }
-        /* 즐겨찾기 영역 */
-        .favorite-section {
-            background-color: #fff;
-            border-radius: 8px;
-            padding: 8px 10px;
-            margin-top: 10px;
-            border: 1px solid #e9ecef;
-        }
-        .favorite-section-title {
-            font-size: 0.9rem;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-        .social-link-row small { font-size: 0.75rem; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>유튜브 실시간 트렌드 찾기</title>
+  <link rel="icon" href="data:;base64,=">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body{font-family:'Noto Sans KR',sans-serif;background:#f8f9fa;color:#212529}
+    .header{background:#fff;border-bottom:1px solid #dee2e6;padding:20px 0;margin-bottom:20px}
+    .main-content{padding:20px}
+    .video-card{background:#fff;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,.1);margin-bottom:20px;overflow:hidden;transition:transform .2s}
+    .video-card:hover{transform:translateY(-5px)}
+    .video-card img{width:100%;height:auto}
+    .card-body{padding:15px}
+    .card-title{font-size:1.1rem;font-weight:700;height:4.5em;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+    .stats-badge{font-size:.7rem;font-weight:700;padding:3px 6px;margin-right:3px;border-radius:5px;display:inline-block}
+    .badge-subscribers{background:#ff4500;color:#fff}
+    .badge-views{background:#008080;color:#fff}
+    .badge-likes{background:#ffd700;color:#212529}
+    .badge-comments{background:#6a5acd;color:#fff}
+    .badge-velocity{background:#20c997;color:#fff}
+    .badge-likeRate{background:#ff6f61;color:#fff}
+    .badge-commentRate{background:#4dabf7;color:#fff}
+    .category-button{border-radius:20px;margin:5px;font-weight:700}
+    .category-button.active{color:#fff!important;background:#dc3545!important}
+    .badge-time{font-size:.8rem;background:#e9ecef;color:#495057}
+    .filter-bar{margin-top:10px}
+    .filter-bar .btn-group + .btn-group{margin-left:8px}
+    .trend-box{background:#fff;border-radius:8px;padding:12px 16px;box-shadow:0 4px 8px rgba(0,0,0,.06);max-height:80vh;overflow-y:auto;font-size:.95rem;margin-top:10px}
+    .trend-box h5{font-weight:700}
+    .trend-meta{font-size:.8rem}
+    .trend-list{padding-left:18px;margin-bottom:0}
+    .trend-list li{margin-bottom:4px;display:flex;align-items:center;justify-content:space-between}
+    .trend-keyword{flex:1;margin-right:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+    .trend-keyword:hover{text-decoration:underline}
+    .trend-score-badge{font-size:.75rem;padding:2px 6px;border-radius:10px;background:#f1f3f5;color:#495057}
 
-        /* ✅ 구독자 대비 조회수 배수 뱃지 */
-        .badge-multi {
-            display: inline-block;
-            font-size: 0.78rem;
-            font-weight: 800;
-            padding: 3px 8px;
-            border-radius: 999px;
-            margin-bottom: 6px;
-        }
-        .multi-20  { background-color: #e9ecef; color: #212529; }
-        .multi-50  { background-color: #20c997; color: #fff; }
-        .multi-100 { background-color: #fd7e14; color: #fff; }
-        .multi-200 { background-color: #dc3545; color: #fff; }
+    .favorite-section{background:#fff;border-radius:8px;padding:8px 10px;margin-top:10px;border:1px solid #e9ecef}
+    .favorite-section-title{font-size:.9rem;font-weight:700;margin-bottom:4px}
+    .social-link-row small{font-size:.75rem}
 
-        /* ✅ "자돈" 클릭 새로고침 */
-        .brand-reload {
-            cursor: pointer;
-            user-select: none;
-        }
-        .brand-reload:hover {
-            text-decoration: underline;
-        }
-    </style>
+    /* ✅ 떡상 배지(속도/비율/더블) */
+    .boom-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:.78rem;
+      font-weight:900;
+      padding:4px 10px;
+      border-radius:999px;
+      margin-bottom:6px;
+      line-height:1;
+      letter-spacing:-0.2px;
+      box-shadow:0 6px 14px rgba(0,0,0,.10);
+      user-select:none;
+    }
+    .boom-speed{background:#e9ecef;color:#212529}
+    .boom-ratio{background:#fd7e14;color:#fff}
+    .boom-double{
+      background:#dc3545;color:#fff;
+      position:relative;
+      overflow:hidden;
+    }
+    .boom-double::after{
+      content:"";
+      position:absolute;
+      top:-30%;
+      left:-30%;
+      width:160%;
+      height:160%;
+      background:linear-gradient(120deg, transparent 0%, rgba(255,255,255,.25) 45%, transparent 60%);
+      transform:rotate(20deg);
+      animation:shine 1.8s ease-in-out infinite;
+      pointer-events:none;
+    }
+    @keyframes shine{
+      0%{transform:translateX(-40%) rotate(20deg)}
+      100%{transform:translateX(40%) rotate(20deg)}
+    }
+
+    .brand-reload{cursor:pointer;user-select:none}
+    .brand-reload:hover{text-decoration:underline}
+  </style>
 </head>
 <body>
 <div class="container-fluid header">
-    <div class="row align-items-center">
-        <div class="col-md-3 text-center">
-            <!-- ✅ "자돈" 클릭하면 새로고침 -->
-            <h3 id="brandReload" class="brand-reload">유튜브 트렌드 찾기 제작 : 자돈</h3>
-            <p class="text-muted">기간별 인기 영상 분석 · 소셜 태그 탐색</p>
-        </div>
-
-        <div class="col-md-6">
-            <!-- 검색창 -->
-            <div class="input-group">
-                <input id="searchInput" type="text" class="form-control" placeholder="제목/채널/키워드 검색 (예: 여캠, 태연)">
-                <button id="searchBtn" class="btn btn-primary">검색</button>
-            </div>
-
-            <!-- 언어 / 지역 선택 -->
-            <div class="mt-2">
-                <span class="text-muted me-3">언어 / 지역 선택:</span>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" id="langKR" checked>
-                    <label class="form-check-label" for="langKR">🇰🇷 한국</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" id="langEN">
-                    <label class="form-check-label" for="langEN">🇺🇸 미국(영어권)</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" id="langJP">
-                    <label class="form-check-label" for="langJP">🇯🇵 일본</label>
-                </div>
-            </div>
-
-            <!-- 🔗 유튜브 / 인스타 / 틱톡 소셜 검색 링크 -->
-            <div class="mt-2 social-link-row" id="social-link-row" style="display:none;">
-                <div class="row g-1">
-                    <div class="col-4 text-center">
-                        <a id="ytLink" href="#" target="_blank" class="btn btn-sm w-100 btn-outline-danger">🔴 유튜브에서 검색</a>
-                    </div>
-                    <div class="col-4 text-center">
-                        <a id="igLink" href="#" target="_blank" class="btn btn-sm w-100 btn-outline-primary">📸 인스타 태그</a>
-                    </div>
-                    <div class="col-4 text-center">
-                        <a id="ttLink" href="#" target="_blank" class="btn btn-sm w-100 btn-outline-dark">🎵 틱톡 태그</a>
-                    </div>
-                </div>
-                <small class="text-muted">현재 입력한 검색어 기준으로 각각 새 창에서 열립니다.</small>
-            </div>
-        </div>
-
-        <!-- API 키 영역 -->
-        <div class="col-md-3 text-center">
-            <p>API 연동 상태: <span id="api-conn-badge" class="badge bg-secondary">API 키 미등록</span></p>
-            <div class="input-group input-group-sm mb-2">
-                <input id="apiKeyInput" type="password" class="form-control" placeholder="본인 YouTube API 키 입력">
-                <button id="saveApiKeyBtn" class="btn btn-outline-primary">저장/변경</button>
-                <button id="clearApiKeyBtn" class="btn btn-outline-danger">해제</button>
-            </div>
-            <small id="apiKeyStatus" class="text-muted d-block">
-                이 브라우저에 저장된 본인 API 키를 사용 중입니다.
-            </small>
-        </div>
+  <div class="row align-items-center">
+    <div class="col-md-3 text-center">
+      <h3 id="brandReload" class="brand-reload">유튜브 트렌드 찾기 제작 : 자돈</h3>
+      <p class="text-muted">기간별 인기 영상 분석 · 소셜 태그 탐색</p>
     </div>
 
-    <hr>
+    <div class="col-md-6">
+      <div class="input-group">
+        <input id="searchInput" type="text" class="form-control" placeholder="제목/채널/키워드 검색 (예: 여캠, 태연)">
+        <button id="searchBtn" class="btn btn-primary">검색</button>
+      </div>
 
-    <!-- 카테고리 버튼 -->
-    <div class="text-center">
-        <button class="btn btn-outline-danger category-button active" data-category="All">📌 전체 영상</button>
-        <button class="btn btn-outline-secondary category-button" data-category="Music">🎶 음악/댄스</button>
-        <button class="btn btn-outline-secondary category-button" data-category="Entertainment">🎬 코미디/오락</button>
-        <button class="btn btn-outline-secondary category-button" data-category="Sports">🏀 스포츠</button>
-        <button class="btn btn-outline-secondary category-button" data-category="Vlog">📸 Vlog/일상</button>
-        <button class="btn btn-outline-secondary category-button" data-category="Education">📚 교육/지식</button>
-        <button class="btn btn-outline-secondary category-button" data-category="IT">💻 IT/테크</button>
-        <button class="btn btn-outline-secondary category-button" data-category="News">📰 뉴스/정치</button>
-        <button class="btn btn-outline-secondary category-button" data-category="Live">📡 라이브</button>
+      <div class="mt-2">
+        <span class="text-muted me-3">언어 / 지역 선택:</span>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="langKR" checked>
+          <label class="form-check-label" for="langKR">🇰🇷 한국</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="langEN">
+          <label class="form-check-label" for="langEN">🇺🇸 미국(영어권)</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="langJP">
+          <label class="form-check-label" for="langJP">🇯🇵 일본</label>
+        </div>
+      </div>
+
+      <div class="mt-2 social-link-row" id="social-link-row" style="display:none;">
+        <div class="row g-1">
+          <div class="col-4 text-center">
+            <a id="ytLink" href="#" target="_blank" class="btn btn-sm w-100 btn-outline-danger">🔴 유튜브에서 검색</a>
+          </div>
+          <div class="col-4 text-center">
+            <a id="igLink" href="#" target="_blank" class="btn btn-sm w-100 btn-outline-primary">📸 인스타 태그</a>
+          </div>
+          <div class="col-4 text-center">
+            <a id="ttLink" href="#" target="_blank" class="btn btn-sm w-100 btn-outline-dark">🎵 틱톡 태그</a>
+          </div>
+        </div>
+        <small class="text-muted">현재 입력한 검색어 기준으로 각각 새 창에서 열립니다.</small>
+      </div>
     </div>
 
-    <!-- 필터 바 -->
-    <div class="text-center filter-bar">
-        <!-- 길이 필터 -->
-        <div class="btn-group btn-group-sm" role="group" aria-label="Duration filter">
-            <button class="btn btn-outline-dark duration-button active" data-duration="all">전체 길이</button>
-            <button class="btn btn-outline-dark duration-button" data-duration="short">1분 이하</button>
-            <button class="btn btn-outline-dark duration-button" data-duration="mid">1~10분</button>
-            <button class="btn btn-outline-dark duration-button" data-duration="long">10분 이상</button>
-        </div>
+    <div class="col-md-3 text-center">
+      <p>API 연동 상태: <span id="api-conn-badge" class="badge bg-secondary">API 키 미등록</span></p>
+      <div class="input-group input-group-sm mb-2">
+        <input id="apiKeyInput" type="password" class="form-control" placeholder="본인 YouTube API 키 입력">
+        <button id="saveApiKeyBtn" class="btn btn-outline-primary">저장/변경</button>
+        <button id="clearApiKeyBtn" class="btn btn-outline-danger">해제</button>
+      </div>
+      <small id="apiKeyStatus" class="text-muted d-block">이 브라우저에 저장된 본인 API 키를 사용 중입니다.</small>
+    </div>
+  </div>
 
-        <!-- 정렬 필터 -->
-        <div class="btn-group btn-group-sm" role="group" aria-label="View sort">
-            <button class="btn btn-outline-secondary sort-button active" data-sort="viewsDesc">조회수 높은 순</button>
-            <button class="btn btn-outline-secondary sort-button" data-sort="viewsAsc">조회수 낮은 순</button>
-            <button class="btn btn-outline-secondary sort-button" data-sort="viewsPerHourDesc">조회 속도 순</button>
-            <button class="btn btn-outline-secondary sort-button" data-sort="likeRateDesc">좋아요율 순</button>
-            <button class="btn btn-outline-danger sort-button" data-sort="viewsPerSubDesc">구독자 대비 조회수</button>
-        </div>
+  <hr>
 
-        <!-- 기간 필터 -->
-        <div class="btn-group btn-group-sm" role="group" aria-label="Time range filter">
-            <button class="btn btn-outline-secondary time-range-button active" data-range="r1">최근 48시간</button>
-            <button class="btn btn-outline-secondary time-range-button" data-range="r2">48시간~1주</button>
-            <button class="btn btn-outline-secondary time-range-button" data-range="r3">1주~1달</button>
-            <button class="btn btn-outline-secondary time-range-button" data-range="r4">1달~6개월</button>
-            <button class="btn btn-outline-secondary time-range-button" data-range="r5">6개월~1년</button>
-            <button class="btn btn-outline-secondary time-range-button" data-range="r6">1년 이상</button>
-        </div>
+  <div class="text-center">
+    <button class="btn btn-outline-danger category-button active" data-category="All">📌 전체 영상</button>
+    <button class="btn btn-outline-secondary category-button" data-category="Music">🎶 음악/댄스</button>
+    <button class="btn btn-outline-secondary category-button" data-category="Entertainment">🎬 코미디/오락</button>
+    <button class="btn btn-outline-secondary category-button" data-category="Sports">🏀 스포츠</button>
+    <button class="btn btn-outline-secondary category-button" data-category="Vlog">📸 Vlog/일상</button>
+    <button class="btn btn-outline-secondary category-button" data-category="Education">📚 교육/지식</button>
+    <button class="btn btn-outline-secondary category-button" data-category="IT">💻 IT/테크</button>
+    <button class="btn btn-outline-secondary category-button" data-category="News">📰 뉴스/정치</button>
+    <button class="btn btn-outline-secondary category-button" data-category="Live">📡 라이브</button>
+  </div>
+
+  <div class="text-center filter-bar">
+    <div class="btn-group btn-group-sm" role="group" aria-label="Duration filter">
+      <button class="btn btn-outline-dark duration-button active" data-duration="all">전체 길이</button>
+      <button class="btn btn-outline-dark duration-button" data-duration="short">1분 이하</button>
+      <button class="btn btn-outline-dark duration-button" data-duration="mid">1~10분</button>
+      <button class="btn btn-outline-dark duration-button" data-duration="long">10분 이상</button>
     </div>
 
-    <!-- 구독자 필터 -->
-    <div class="text-center mt-2">
-        <span class="text-muted me-2">구독자 수 필터:</span>
-        <div class="form-check form-check-inline">
-            <input class="form-check-input subscriber-filter-checkbox" type="checkbox" id="subFilterAll" data-range="all" checked>
-            <label class="form-check-label" for="subFilterAll">전체</label>
-        </div>
-        <div class="form-check form-check-inline">
-            <input class="form-check-input subscriber-filter-checkbox" type="checkbox" id="subFilter1_1000" data-range="sub_1_1000">
-            <label class="form-check-label" for="subFilter1_1000">1 ~ 1,000명</label>
-        </div>
-        <div class="form-check form-check-inline">
-            <input class="form-check-input subscriber-filter-checkbox" type="checkbox" id="subFilter1000_10000" data-range="sub_1000_10000">
-            <label class="form-check-label" for="subFilter1000_10000">1,000 ~ 1만명</label>
-        </div>
-        <div class="form-check form-check-inline">
-            <input class="form-check-input subscriber-filter-checkbox" type="checkbox" id="subFilter10000_40000" data-range="sub_10000_40000">
-            <label class="form-check-label" for="subFilter10000_40000">1만 ~ 4만명</label>
-        </div>
-        <div class="form-check form-check-inline">
-            <input class="form-check-input subscriber-filter-checkbox" type="checkbox" id="subFilter50000_plus" data-range="sub_50000_plus">
-            <label class="form-check-label" for="subFilter50000_plus">5만 이상</label>
-        </div>
+    <div class="btn-group btn-group-sm" role="group" aria-label="View sort">
+      <button class="btn btn-outline-secondary sort-button active" data-sort="viewsDesc">조회수 높은 순</button>
+      <button class="btn btn-outline-secondary sort-button" data-sort="viewsAsc">조회수 낮은 순</button>
+      <button class="btn btn-outline-secondary sort-button" data-sort="viewsPerHourDesc">조회 속도 순</button>
+      <button class="btn btn-outline-secondary sort-button" data-sort="likeRateDesc">좋아요율 순</button>
+      <button class="btn btn-outline-danger sort-button" data-sort="viewsPerSubDesc">구독자 대비 조회수</button>
     </div>
 
-    <!-- ⭐ 즐겨찾기 영역 -->
-    <div class="container mt-2">
-        <div class="favorite-section">
-            <div class="favorite-section-title">⭐ 나만의 즐겨찾기 키워드 그룹</div>
-            <div class="row g-1 align-items-center">
-                <div class="col-md-3 col-12">
-                    <input id="favGroupName" type="text" class="form-control form-control-sm" placeholder="대태그 이름 (예: 여캠)">
-                </div>
-                <div class="col-md-7 col-12">
-                    <input id="favKeywords" type="text" class="form-control form-control-sm" placeholder="소태그(키워드) 쉼표/띄어쓰기로 구분 (예: 태연, 탁재훈)">
-                </div>
-                <div class="col-md-2 col-12 d-grid">
-                    <button id="addFavBtn" class="btn btn-sm btn-outline-warning">추가/업데이트</button>
-                </div>
-            </div>
-            <div id="favorite-buttons" class="mt-2">
-                <small class="text-muted">등록된 즐겨찾기가 없습니다.</small>
-            </div>
-        </div>
+    <div class="btn-group btn-group-sm" role="group" aria-label="Time range filter">
+      <button class="btn btn-outline-secondary time-range-button active" data-range="r1">최근 48시간</button>
+      <button class="btn btn-outline-secondary time-range-button" data-range="r2">48시간~1주</button>
+      <button class="btn btn-outline-secondary time-range-button" data-range="r3">1주~1달</button>
+      <button class="btn btn-outline-secondary time-range-button" data-range="r4">1달~6개월</button>
+      <button class="btn btn-outline-secondary time-range-button" data-range="r5">6개월~1년</button>
+      <button class="btn btn-outline-secondary time-range-button" data-range="r6">1년 이상</button>
     </div>
+  </div>
+
+  <div class="text-center mt-2">
+    <span class="text-muted me-2">구독자 수 필터:</span>
+    <div class="form-check form-check-inline">
+      <input class="form-check-input subscriber-filter-checkbox" type="checkbox" id="subFilterAll" data-range="all" checked>
+      <label class="form-check-label" for="subFilterAll">전체</label>
+    </div>
+    <div class="form-check form-check-inline">
+      <input class="form-check-input subscriber-filter-checkbox" type="checkbox" id="subFilter1_1000" data-range="sub_1_1000">
+      <label class="form-check-label" for="subFilter1_1000">1 ~ 1,000명</label>
+    </div>
+    <div class="form-check form-check-inline">
+      <input class="form-check-input subscriber-filter-checkbox" type="checkbox" id="subFilter1000_10000" data-range="sub_1000_10000">
+      <label class="form-check-label" for="subFilter1000_10000">1,000 ~ 1만명</label>
+    </div>
+    <div class="form-check form-check-inline">
+      <input class="form-check-input subscriber-filter-checkbox" type="checkbox" id="subFilter10000_40000" data-range="sub_10000_40000">
+      <label class="form-check-label" for="subFilter10000_40000">1만 ~ 4만명</label>
+    </div>
+    <div class="form-check form-check-inline">
+      <input class="form-check-input subscriber-filter-checkbox" type="checkbox" id="subFilter50000_plus" data-range="sub_50000_plus">
+      <label class="form-check-label" for="subFilter50000_plus">5만 이상</label>
+    </div>
+  </div>
+
+  <div class="container mt-2">
+    <div class="favorite-section">
+      <div class="favorite-section-title">⭐ 나만의 즐겨찾기 키워드 그룹</div>
+      <div class="row g-1 align-items-center">
+        <div class="col-md-3 col-12">
+          <input id="favGroupName" type="text" class="form-control form-control-sm" placeholder="대태그 이름 (예: 여캠)">
+        </div>
+        <div class="col-md-7 col-12">
+          <input id="favKeywords" type="text" class="form-control form-control-sm" placeholder="소태그(키워드) 쉼표/띄어쓰기로 구분 (예: 태연, 탁재훈)">
+        </div>
+        <div class="col-md-2 col-12 d-grid">
+          <button id="addFavBtn" class="btn btn-sm btn-outline-warning">추가/업데이트</button>
+        </div>
+      </div>
+      <div id="favorite-buttons" class="mt-2">
+        <small class="text-muted">등록된 즐겨찾기가 없습니다.</small>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- 메인 컨텐츠 -->
 <div class="container main-content">
-    <div class="row">
-        <!-- 왼쪽 영상 영역 : 8 -->
-        <div class="col-lg-8 col-md-8">
-            <h4 id="category-title">📌 전체 영상</h4>
-            <p class="text-muted" id="api-status">API 호출 준비 중...</p>
-            <p class="text-muted" id="time-info">기준: 최근 48시간 이내 업로드된 인기 영상만 표시 (가능한 경우)</p>
-            <div class="row" id="video-list"></div>
-        </div>
-
-        <!-- 오른쪽: 트렌드 키워드만 -->
-        <div class="col-lg-4 col-md-4">
-            <div class="trend-box">
-                <h5>🔥 실시간 트렌드 키워드 TOP 30</h5>
-                <p class="text-muted trend-meta mb-1" id="trend-region-info">지역: KR 기준</p>
-                <p class="text-muted trend-meta mb-2" id="trend-updated-time">
-                    기준: 현재 표시 중인 인기 영상(선택한 기간 기준)에서 자동 추출
-                </p>
-                <ol id="trend-keyword-list" class="trend-list">
-                    <li><span class="trend-keyword">데이터 로딩 중...</span></li>
-                </ol>
-            </div>
-        </div>
+  <div class="row">
+    <div class="col-lg-8 col-md-8">
+      <h4 id="category-title">📌 전체 영상</h4>
+      <p class="text-muted" id="api-status">API 호출 준비 중...</p>
+      <p class="text-muted" id="time-info">기준: 최근 48시간 이내 업로드된 인기 영상만 표시 (가능한 경우)</p>
+      <div class="row" id="video-list"></div>
     </div>
+
+    <div class="col-lg-4 col-md-4">
+      <div class="trend-box">
+        <h5>🔥 실시간 트렌드 키워드 TOP 30</h5>
+        <p class="text-muted trend-meta mb-1" id="trend-region-info">지역: KR 기준</p>
+        <p class="text-muted trend-meta mb-2" id="trend-updated-time">기준: 현재 표시 중인 인기 영상(선택한 기간 기준)에서 자동 추출</p>
+        <ol id="trend-keyword-list" class="trend-list">
+          <li><span class="trend-keyword">데이터 로딩 중...</span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- ✅ 즐겨찾기 편집 모달 -->
+<!-- 즐겨찾기 편집 모달 -->
 <div class="modal fade" id="favEditModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">⭐ 즐겨찾기 상세/수정</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-2">
-                    <label class="form-label mb-1">대태그</label>
-                    <input id="favEditName" type="text" class="form-control" placeholder="대태그 이름">
-                    <input id="favEditOldName" type="hidden">
-                </div>
-                <div class="mb-2">
-                    <label class="form-label mb-1">소태그(키워드)</label>
-                    <input id="favEditKeywords" type="text" class="form-control" placeholder="쉼표/띄어쓰기로 구분">
-                    <small class="text-muted">예: 임영웅, 콘서트, 트로트</small>
-                </div>
-                <div class="alert alert-light border mb-0">
-                    <div class="small text-muted mb-1">현재 저장값</div>
-                    <div class="small"><b id="favEditPreviewTitle"></b></div>
-                    <div class="small text-muted" id="favEditPreviewKeywords"></div>
-                </div>
-            </div>
-            <div class="modal-footer d-flex justify-content-between">
-                <button id="favEditDeleteBtn" type="button" class="btn btn-outline-danger">삭제</button>
-                <div class="d-flex gap-2">
-                    <button id="favEditSearchBtn" type="button" class="btn btn-outline-primary">검색 적용</button>
-                    <button id="favEditSaveBtn" type="button" class="btn btn-warning">저장</button>
-                </div>
-            </div>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">⭐ 즐겨찾기 상세/수정</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2">
+          <label class="form-label mb-1">대태그</label>
+          <input id="favEditName" type="text" class="form-control" placeholder="대태그 이름">
+          <input id="favEditOldName" type="hidden">
         </div>
+        <div class="mb-2">
+          <label class="form-label mb-1">소태그(키워드)</label>
+          <input id="favEditKeywords" type="text" class="form-control" placeholder="쉼표/띄어쓰기로 구분">
+          <small class="text-muted">예: 임영웅, 콘서트, 트로트</small>
+        </div>
+        <div class="alert alert-light border mb-0">
+          <div class="small text-muted mb-1">현재 저장값</div>
+          <div class="small"><b id="favEditPreviewTitle"></b></div>
+          <div class="small text-muted" id="favEditPreviewKeywords"></div>
+        </div>
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <button id="favEditDeleteBtn" type="button" class="btn btn-outline-danger">삭제</button>
+        <div class="d-flex gap-2">
+          <button id="favEditSearchBtn" type="button" class="btn btn-outline-primary">검색 적용</button>
+          <button id="favEditSaveBtn" type="button" class="btn btn-warning">저장</button>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    let API_KEY = null;
-    const BASE_URL = 'https://www.googleapis.com/youtube/v3/';
-    const CATEGORIES = {
-        'All': '',
-        'Music': '10',
-        'Entertainment': '24',
-        'Sports': '17',
-        'Vlog': '22',
-        'Education': '27',
-        'IT': '28',
-        'News': '25',
-        'Live': 'LIVE'
-    };
-    const ALL_CATEGORY_IDS = ['10','24','17','22','27','28','25'];
+  let API_KEY=null;
+  const BASE_URL='https://www.googleapis.com/youtube/v3/';
+  const CATEGORIES={
+    'All':'','Music':'10','Entertainment':'24','Sports':'17','Vlog':'22',
+    'Education':'27','IT':'28','News':'25','Live':'LIVE'
+  };
+  const ALL_CATEGORY_IDS=['10','24','17','22','27','28','25'];
 
-    let currentCategory = 'All';
-    let currentBaseVideos = [];
-    let currentChannelStatsMap = {};
-    let currentSearchKeyword = '';
-    let currentDurationFilter = 'all';
-    let currentSortMode = 'viewsDesc';
-    let currentTrendKeywords = [];
-    let currentSubscriberRanges = new Set(['all']);
-    let currentTimeRange = 'r1';
+  let currentCategory='All';
+  let currentBaseVideos=[];
+  let currentChannelStatsMap={};
+  let currentSearchKeyword='';
+  let currentDurationFilter='all';
+  let currentSortMode='viewsDesc';
+  let currentSubscriberRanges=new Set(['all']);
+  let currentTimeRange='r1';
 
-    // 즐겨찾기 그룹
-    let favoriteGroups = {};
+  let favoriteGroups={};
 
-    const STOPWORDS_COMMON = new Set([
-        'official','video','music','mv','the','and','for','with','from','feat','live','of','in','on',
-        '방송','영상','공식','채널','티비','tv','full','ver','version','officialmv','shorts','쇼츠',
-        'ep','part','재업','하이라이트','풀버전','클립','clip','gameplay','highlight','뉴스','단독'
-    ]);
-    const STOPWORDS_KO = new Set(['오늘','어제','이번','이것','저것','우리','당신','영상','채널','공식','합니다','합니다만','합니다요','입니다','그냥','영상입니다','영상보기']);
-    const STOPWORDS_EN = new Set(['a','an','is','it','this','that','you','me','we','they','are','to','at','by','as','be','my','your','our','their','new','official','feat','ft']);
-    const STOPWORDS_JA = new Set(['の','に','を','が','と','で','です','ます','する','した','して','から','まで','さん','ちゃん','くん','公式','映像']);
+  const STOPWORDS_COMMON=new Set(['official','video','music','mv','the','and','for','with','from','feat','live','of','in','on','방송','영상','공식','채널','티비','tv','full','ver','version','officialmv','shorts','쇼츠','ep','part','재업','하이라이트','풀버전','클립','clip','gameplay','highlight','뉴스','단독']);
+  const STOPWORDS_KO=new Set(['오늘','어제','이번','이것','저것','우리','당신','영상','채널','공식','합니다','합니다만','합니다요','입니다','그냥','영상입니다','영상보기']);
+  const STOPWORDS_EN=new Set(['a','an','is','it','this','that','you','me','we','they','are','to','at','by','as','be','my','your','our','their','new','official','feat','ft']);
+  const STOPWORDS_JA=new Set(['の','に','を','が','と','で','です','ます','する','した','して','から','まで','さん','ちゃん','くん','公式','映像']);
 
-    function formatNumberKR(num) {
-        if (num == null || isNaN(num)) return '0';
-        num = Number(num);
-        if (num >= 100000000) {
-            const eok = num / 100000000;
-            const str = (eok >= 10 ? eok.toFixed(0) : eok.toFixed(1)).replace(/\.0$/, '');
-            return str + '억';
-        }
-        if (num >= 10000) return Math.round(num / 10000) + '만';
-        if (num >= 1000) return Math.round(num / 1000) + '천';
-        return num.toString();
+  function formatNumberKR(num){
+    if(num==null||isNaN(num)) return '0';
+    num=Number(num);
+    if(num>=100000000){
+      const eok=num/100000000;
+      const str=(eok>=10?eok.toFixed(0):eok.toFixed(1)).replace(/\.0$/,'');
+      return str+'억';
     }
-    function formatNumber(num) { return formatNumberKR(num); }
+    if(num>=10000) return Math.round(num/10000)+'만';
+    if(num>=1000) return Math.round(num/1000)+'천';
+    return num.toString();
+  }
+  function formatNumber(n){return formatNumberKR(n);}
 
-    function timeAgo(publishedAt) {
-        const now = new Date();
-        const published = new Date(publishedAt);
-        const diffMs = now - published;
-        const diffMinutes = Math.floor(diffMs / (1000 * 60));
-        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-        if (diffMinutes < 1) return '방금 전';
-        if (diffHours < 1) return `${diffMinutes}분 전`;
-        if (diffHours < 48) return `${diffHours}시간 전`;
-        const diffDays = Math.floor(diffHours / 24);
-        return `${diffDays}일 전`;
+  function timeAgo(publishedAt){
+    const now=new Date();
+    const published=new Date(publishedAt);
+    const diffMs=now-published;
+    const diffMinutes=Math.floor(diffMs/(1000*60));
+    const diffHours=Math.floor(diffMs/(1000*60*60));
+    if(diffMinutes<1) return '방금 전';
+    if(diffHours<1) return `${diffMinutes}분 전`;
+    if(diffHours<48) return `${diffHours}시간 전`;
+    const diffDays=Math.floor(diffHours/24);
+    return `${diffDays}일 전`;
+  }
+
+  function parseDurationSeconds(iso){
+    if(!iso) return 0;
+    const match=iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+    if(!match) return 0;
+    const hours=parseInt(match[1]||'0');
+    const minutes=parseInt(match[2]||'0');
+    const seconds=parseInt(match[3]||'0');
+    return hours*3600+minutes*60+seconds;
+  }
+  function formatDurationLabel(totalSeconds){
+    if(!totalSeconds||totalSeconds<=0) return '';
+    const h=Math.floor(totalSeconds/3600);
+    const m=Math.floor((totalSeconds%3600)/60);
+    const s=totalSeconds%60;
+    if(h>0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    return `${m}:${String(s).padStart(2,'0')}`;
+  }
+
+  function getRegionAndLanguage(){
+    const kr=document.getElementById('langKR').checked;
+    const en=document.getElementById('langEN').checked;
+    const jp=document.getElementById('langJP').checked;
+    if(kr) return {regionCode:'KR',relevanceLanguage:'ko'};
+    if(en) return {regionCode:'US',relevanceLanguage:'en'};
+    if(jp) return {regionCode:'JP',relevanceLanguage:'ja'};
+    return {regionCode:'KR',relevanceLanguage:'ko'};
+  }
+
+  function getTimeRangeConfig(){
+    const now=new Date();
+    const hour=60*60*1000;
+    const day=24*hour;
+    switch(currentTimeRange){
+      case 'r1': return {after:new Date(now.getTime()-48*hour),before:null,label:'최근 48시간 이내'};
+      case 'r2': return {after:new Date(now.getTime()-7*day),before:new Date(now.getTime()-48*hour),label:'48시간 ~ 1주일 전'};
+      case 'r3': return {after:new Date(now.getTime()-30*day),before:new Date(now.getTime()-7*day),label:'1주일 ~ 1달 전'};
+      case 'r4': return {after:new Date(now.getTime()-180*day),before:new Date(now.getTime()-30*day),label:'1달 ~ 6개월 전'};
+      case 'r5': return {after:new Date(now.getTime()-365*day),before:new Date(now.getTime()-180*day),label:'6개월 ~ 1년 전'};
+      case 'r6': return {after:null,before:new Date(now.getTime()-365*day),label:'1년 이상 (1년 이전 업로드)'};
+      default:   return {after:new Date(now.getTime()-48*hour),before:null,label:'최근 48시간 이내'};
+    }
+  }
+  function filterVideosByTimeRange(videos){
+    const {after,before}=getTimeRangeConfig();
+    if(!after && !before) return videos;
+    return videos.filter(v=>{
+      const t=new Date(v.snippet.publishedAt);
+      if(after && t<after) return false;
+      if(before && t>before) return false;
+      return true;
+    });
+  }
+
+  /* API 키 저장/로드/해제 */
+  const API_KEY_STORAGE_KEY='ytTrendApiKey';
+  let _storageMode='localStorage';
+  let _memoryKey=null;
+
+  function getStorage(){
+    try{
+      const t='__yttrend_test__';
+      window.localStorage.setItem(t,'1');
+      window.localStorage.removeItem(t);
+      _storageMode='localStorage';
+      return window.localStorage;
+    }catch(e){
+      _storageMode='memory';
+      return null;
+    }
+  }
+  function loadApiKey(){
+    const badge=document.getElementById('api-conn-badge');
+    const status=document.getElementById('apiKeyStatus');
+    const input=document.getElementById('apiKeyInput');
+
+    const st=getStorage();
+    const saved=st?st.getItem(API_KEY_STORAGE_KEY):_memoryKey;
+
+    if(saved && saved.trim()!==''){
+      API_KEY=saved.trim();
+      badge.className='badge bg-success';
+      badge.textContent='API 키 등록됨';
+      status.textContent=(_storageMode==='localStorage')
+        ? '이 브라우저에 저장된 본인 API 키를 사용 중입니다. (해제 전까지 유지)'
+        : '브라우저 설정으로 저장소 접근이 막혀 메모리로만 사용 중입니다. (새로고침/재시작 시 초기화)';
+      if(input) input.value='';
+    }else{
+      API_KEY=null;
+      badge.className='badge bg-secondary';
+      badge.textContent='API 키 미등록';
+      status.textContent='상단 입력창에 본인 API 키를 저장해 주세요.';
+    }
+  }
+  function saveApiKey(){
+    const input=document.getElementById('apiKeyInput');
+    const newKey=(input.value||'').trim();
+    if(!newKey){ alert('API 키를 입력해 주세요.'); return; }
+
+    API_KEY=newKey;
+    const badge=document.getElementById('api-conn-badge');
+    const status=document.getElementById('apiKeyStatus');
+    const st=getStorage();
+
+    if(st){
+      st.setItem(API_KEY_STORAGE_KEY,newKey);
+      status.textContent='이 브라우저에 저장된 본인 API 키를 사용 중입니다. (해제 전까지 유지)';
+    }else{
+      _memoryKey=newKey;
+      status.textContent='브라우저 설정으로 저장소 접근이 막혀 메모리로만 사용 중입니다. (새로고침/재시작 시 초기화)';
     }
 
-    function parseDurationSeconds(iso) {
-        if (!iso) return 0;
-        const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-        if (!match) return 0;
-        const hours = parseInt(match[1] || '0');
-        const minutes = parseInt(match[2] || '0');
-        const seconds = parseInt(match[3] || '0');
-        return hours * 3600 + minutes * 60 + seconds;
+    badge.className='badge bg-success';
+    badge.textContent='API 키 등록됨';
+    input.value='';
+    alert(st ? 'API 키가 저장/변경되었습니다. (이 브라우저에서 해제 전까지 유지됩니다)' : 'API 키가 적용되었습니다. (저장이 막혀 이번 실행 동안만 유지됩니다)');
+  }
+  function clearApiKey(){
+    const st=getStorage();
+    try{ if(st) st.removeItem(API_KEY_STORAGE_KEY); }catch(e){}
+    _memoryKey=null; API_KEY=null;
+
+    const badge=document.getElementById('api-conn-badge');
+    const status=document.getElementById('apiKeyStatus');
+    badge.className='badge bg-secondary';
+    badge.textContent='API 키 미등록';
+    status.textContent='상단 입력창에 본인 API 키를 저장해 주세요.';
+
+    document.getElementById('video-list').innerHTML='';
+    document.getElementById('api-status').textContent='API 키가 해제되었습니다. 다시 사용하려면 API 키를 등록해 주세요.';
+    document.getElementById('trend-keyword-list').innerHTML='<li><span class="trend-keyword">API 키를 먼저 등록해 주세요.</span></li>';
+    alert('API 키가 해제되었습니다.');
+  }
+
+  function getFriendlyErrorMessage(errorObj, contextText){
+    const reason=errorObj?.errors?.[0]?.reason || '';
+    const message=errorObj?.message || '';
+    let prefix=contextText || 'API 호출 중 오류가 발생했습니다.';
+    switch(reason){
+      case 'quotaExceeded': return `${prefix}<br>⚠️ 오늘 YouTube API 쿼터를 모두 사용했습니다.`;
+      case 'accessNotConfigured': return `${prefix}<br>⚠️ YouTube Data API v3 사용 설정이 되어 있지 않습니다.`;
+      case 'ipRefererBlocked':
+      case 'dailyLimitExceeded':
+      case 'keyInvalid':
+      case 'forbidden':
+        return `${prefix}<br>⚠️ API 키 설정(도메인/IP/유효성)을 확인해 주세요.`;
+      default:
+        return `${prefix}<br>(${message || '알 수 없는 오류입니다.'})`;
     }
-    function formatDurationLabel(totalSeconds) {
-        if (!totalSeconds || totalSeconds <= 0) return '';
-        const h = Math.floor(totalSeconds / 3600);
-        const m = Math.floor((totalSeconds % 3600) / 60);
-        const s = totalSeconds % 60;
-        if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        return `${m}:${String(s).padStart(2, '0')}`;
+  }
+
+  async function fetchMostPopularForCategory(regionCode, categoryId){
+    let url=`${BASE_URL}videos?part=snippet,contentDetails,statistics&chart=mostPopular&regionCode=${regionCode}&maxResults=50&key=${API_KEY}`;
+    if(categoryId) url+=`&videoCategoryId=${categoryId}`;
+    const r=await fetch(url);
+    const d=await r.json();
+    if(d.error) throw {ytError:d.error};
+    return d.items||[];
+  }
+
+  async function fetchMusicVideos(regionCode, categoryId, timeConfig){
+    const {after,before}=timeConfig;
+    let searchUrl=`${BASE_URL}search?part=snippet&type=video&maxResults=50&order=viewCount&regionCode=${regionCode}&videoCategoryId=${categoryId}&key=${API_KEY}`;
+    if(after) searchUrl+=`&publishedAfter=${after.toISOString()}`;
+    if(before) searchUrl+=`&publishedBefore=${before.toISOString()}`;
+    const sr=await fetch(searchUrl);
+    const sd=await sr.json();
+    if(sd.error) throw {ytError:sd.error};
+    const items=sd.items||[];
+    if(items.length===0) return [];
+    const ids=items.map(it=>it.id && it.id.videoId).filter(Boolean);
+    const vr=await fetch(`${BASE_URL}videos?part=snippet,contentDetails,statistics&id=${ids.join(',')}&key=${API_KEY}`);
+    const vd=await vr.json();
+    if(vd.error) throw {ytError:vd.error};
+    return vd.items||[];
+  }
+
+  async function fetchPopularVideos(categoryId){
+    const listEl=document.getElementById('video-list');
+    const statusEl=document.getElementById('api-status');
+    const badge=document.getElementById('api-conn-badge');
+
+    if(!API_KEY){
+      listEl.innerHTML='';
+      statusEl.textContent='먼저 상단에서 본인 YouTube API 키를 등록해 주세요.';
+      badge.className='badge bg-secondary';
+      badge.textContent='API 키 미등록';
+      return;
     }
 
-    function getRegionAndLanguage() {
-        const kr = document.getElementById('langKR').checked;
-        const en = document.getElementById('langEN').checked;
-        const jp = document.getElementById('langJP').checked;
-        if (kr) return { regionCode: 'KR', relevanceLanguage: 'ko' };
-        if (en) return { regionCode: 'US', relevanceLanguage: 'en' };
-        if (jp) return { regionCode: 'JP', relevanceLanguage: 'ja' };
-        return { regionCode: 'KR', relevanceLanguage: 'ko' };
-    }
+    listEl.innerHTML='';
+    statusEl.textContent='데이터를 불러오는 중입니다...';
+    badge.className='badge bg-warning text-dark';
+    badge.textContent='요청 중...';
 
-    // 기간 설정
-    function getTimeRangeConfig() {
-        const now = new Date();
-        const hour = 60 * 60 * 1000;
-        const day = 24 * hour;
-        switch (currentTimeRange) {
-            case 'r1': return { after: new Date(now.getTime() - 48 * hour), before: null, label: '최근 48시간 이내' };
-            case 'r2': return { after: new Date(now.getTime() - 7 * day), before: new Date(now.getTime() - 48 * hour), label: '48시간 ~ 1주일 전' };
-            case 'r3': return { after: new Date(now.getTime() - 30 * day), before: new Date(now.getTime() - 7 * day), label: '1주일 ~ 1달 전' };
-            case 'r4': return { after: new Date(now.getTime() - 180 * day), before: new Date(now.getTime() - 30 * day), label: '1달 ~ 6개월 전' };
-            case 'r5': return { after: new Date(now.getTime() - 365 * day), before: new Date(now.getTime() - 180 * day), label: '6개월 ~ 1년 전' };
-            case 'r6': return { after: null, before: new Date(now.getTime() - 365 * day), label: '1년 이상 (1년 이전 업로드)' };
-            default:   return { after: new Date(now.getTime() - 48 * hour), before: null, label: '최근 48시간 이내' };
-        }
-    }
+    const {regionCode}=getRegionAndLanguage();
+    const timeConfig=getTimeRangeConfig();
+    updateTrendRegionInfo();
 
-    function filterVideosByTimeRange(videos) {
-        const { after, before } = getTimeRangeConfig();
-        if (!after && !before) return videos;
-        return videos.filter(v => {
-            const publishedAt = new Date(v.snippet.publishedAt);
-            if (after && publishedAt < after) return false;
-            if (before && publishedAt > before) return false;
-            return true;
+    try{
+      let allItems=[];
+
+      if(!categoryId){
+        const results=await Promise.allSettled(ALL_CATEGORY_IDS.map(id=>fetchMostPopularForCategory(regionCode,id)));
+        let firstError=null;
+        results.forEach(r=>{
+          if(r.status==='fulfilled'){
+            if(Array.isArray(r.value)) allItems=allItems.concat(r.value);
+          }else{
+            if(!firstError && r.reason?.ytError) firstError=r.reason;
+          }
         });
+        if(allItems.length===0 && firstError) throw firstError;
+      }else if(categoryId==='10' && timeConfig.after){
+        allItems=await fetchMusicVideos(regionCode,categoryId,timeConfig);
+      }else{
+        allItems=allItems.concat(await fetchMostPopularForCategory(regionCode,categoryId));
+      }
+
+      if(allItems.length===0){
+        currentBaseVideos=[]; currentChannelStatsMap={};
+        renderVideoList([], {});
+        updateTrendKeywords([]);
+        statusEl.textContent='표시할 영상이 없습니다. (이 카테고리/지역에서 인기 영상이 없거나 API 쿼터 제한일 수 있습니다)';
+        document.getElementById('time-info').textContent='기준: 선택한 기간에 해당하는 인기 영상이 없을 수 있습니다.';
+        badge.className='badge bg-warning text-dark';
+        badge.textContent='데이터 없음';
+        currentSearchKeyword='';
+        return;
+      }
+
+      const uniq=new Map();
+      allItems.forEach(v=>{ if(!uniq.has(v.id)) uniq.set(v.id,v); });
+      let combined=Array.from(uniq.values());
+      combined.sort((a,b)=>parseInt(b.statistics?.viewCount||'0',10)-parseInt(a.statistics?.viewCount||'0',10));
+
+      let within=filterVideosByTimeRange(combined);
+      const timeInfoEl=document.getElementById('time-info');
+      const {label}=timeConfig;
+
+      if(within.length===0){
+        within=combined;
+        timeInfoEl.textContent=(categoryId==='10')
+          ? '⚠️ 최근 Music 트렌드가 적어 전체 인기 영상 목록을 표시합니다. (신곡 업데이트 확인)'
+          : '⚠️ 선택한 기간에 해당하는 인기 영상이 거의 없어 전체 인기 영상 목록을 표시합니다.';
+      }else{
+        timeInfoEl.textContent=`기준: ${label} 업로드된 인기 영상만 표시 중입니다.`;
+      }
+
+      currentBaseVideos=within;
+      currentSearchKeyword='';
+
+      currentChannelStatsMap=await fetchChannelStats(within);
+
+      updateVideoListAndStatus();
+      buildAndRenderTrendKeywords();
+
+      badge.className='badge bg-success';
+      badge.textContent='API 연결 정상';
+    }catch(err){
+      console.error(err);
+      if(err.ytError) statusEl.innerHTML=getFriendlyErrorMessage(err.ytError,'⚠️ 인기 영상 목록을 가져오는 데 실패했습니다.');
+      else statusEl.innerHTML='⚠️ API 호출에 실패했습니다.<br>API 키/쿼터/리퍼러(도메인) 제한을 확인해 주세요.';
+      badge.className='badge bg-danger';
+      badge.textContent='오류';
+      updateTrendKeywords([]);
+    }
+  }
+
+  async function fetchLiveVideos(){
+    const listEl=document.getElementById('video-list');
+    const statusEl=document.getElementById('api-status');
+    const badge=document.getElementById('api-conn-badge');
+
+    if(!API_KEY){
+      listEl.innerHTML='';
+      statusEl.textContent='먼저 상단에서 본인 YouTube API 키를 등록해 주세요.';
+      badge.className='badge bg-secondary';
+      badge.textContent='API 키 미등록';
+      return;
     }
 
-    /* -----------------------------
-       🔑 API 키 저장/로드/해제 (브라우저에 영구 저장: localStorage)
-    ----------------------------- */
-    const API_KEY_STORAGE_KEY = 'ytTrendApiKey';
-    let _storageMode = 'localStorage'; // 'localStorage' | 'memory'
-    let _memoryKey = null;
+    listEl.innerHTML='';
+    statusEl.textContent='라이브 방송을 불러오는 중입니다...';
+    badge.className='badge bg-warning text-dark';
+    badge.textContent='요청 중...';
 
-    function getStorage() {
-        try {
-            const t = '__yttrend_test__';
-            window.localStorage.setItem(t, '1');
-            window.localStorage.removeItem(t);
-            _storageMode = 'localStorage';
-            return window.localStorage;
-        } catch (e) {
-            _storageMode = 'memory';
-            return null;
-        }
+    const {regionCode}=getRegionAndLanguage();
+    updateTrendRegionInfo();
+
+    try{
+      const searchUrl=`${BASE_URL}search?part=snippet&type=video&maxResults=50&order=viewCount&regionCode=${regionCode}&eventType=live&key=${API_KEY}`;
+      const sr=await fetch(searchUrl);
+      const sd=await sr.json();
+      if(sd.error) throw {ytError:sd.error};
+
+      const items=sd.items||[];
+      if(items.length===0){
+        currentBaseVideos=[]; currentChannelStatsMap={};
+        renderVideoList([], {});
+        updateTrendKeywords([]);
+        statusEl.textContent='현재 이 지역에서 인기 라이브 방송이 없습니다.';
+        document.getElementById('time-info').textContent='라이브 방송 없음.';
+        badge.className='badge bg-warning text-dark';
+        badge.textContent='라이브 0개';
+        currentSearchKeyword='';
+        return;
+      }
+
+      const ids=items.map(it=>it.id && it.id.videoId).filter(Boolean);
+      const vr=await fetch(`${BASE_URL}videos?part=snippet,contentDetails,statistics&id=${ids.join(',')}&key=${API_KEY}`);
+      const vd=await vr.json();
+      if(vd.error) throw {ytError:vd.error};
+
+      let vids=vd.items||[];
+      vids.sort((a,b)=>parseInt(b.statistics?.viewCount||'0',10)-parseInt(a.statistics?.viewCount||'0',10));
+
+      currentBaseVideos=vids;
+      currentSearchKeyword='';
+      currentChannelStatsMap=await fetchChannelStats(vids);
+
+      document.getElementById('time-info').textContent='기준: 현재 라이브 방송 중인 영상(조회수 높은 순)을 표시합니다. (기간 필터는 라이브에는 적용되지 않습니다)';
+      updateVideoListAndStatus();
+      buildAndRenderTrendKeywords();
+
+      badge.className='badge bg-success';
+      badge.textContent='API 연결 정상';
+    }catch(err){
+      console.error(err);
+      if(err.ytError) statusEl.innerHTML=getFriendlyErrorMessage(err.ytError,'⚠️ 라이브 방송 목록을 가져오는 데 실패했습니다.');
+      else statusEl.innerHTML='⚠️ 라이브 API 호출에 실패했습니다.<br>API 키/쿼터/리퍼러(도메인) 제한을 확인해 주세요.';
+      badge.className='badge bg-danger';
+      badge.textContent='오류';
+      updateTrendKeywords([]);
+    }
+  }
+
+  function updateSocialLinks(keyword){
+    const row=document.getElementById('social-link-row');
+    const yt=document.getElementById('ytLink');
+    const ig=document.getElementById('igLink');
+    const tt=document.getElementById('ttLink');
+    if(!row||!yt||!ig||!tt) return;
+    const trimmed=(keyword||'').trim();
+    if(!trimmed){
+      row.style.display='none';
+      yt.removeAttribute('href'); ig.removeAttribute('href'); tt.removeAttribute('href');
+      return;
+    }
+    const tag=trimmed.replace(/^#/,'');
+    const enc=encodeURIComponent(tag);
+    yt.href=`https://www.youtube.com/results?search_query=${enc}`;
+    ig.href=`https://www.instagram.com/explore/tags/${enc}/`;
+    tt.href=`https://www.tiktok.com/tag/${enc}`;
+    row.style.display='block';
+  }
+
+  async function searchVideosByKeyword(keyword){
+    const listEl=document.getElementById('video-list');
+    const statusEl=document.getElementById('api-status');
+    const badge=document.getElementById('api-conn-badge');
+
+    updateSocialLinks(keyword);
+
+    if(!API_KEY){
+      listEl.innerHTML='';
+      statusEl.textContent='먼저 상단에서 본인 YouTube API 키를 등록해 주세요.';
+      badge.className='badge bg-secondary';
+      badge.textContent='API 키 미등록';
+      return;
     }
 
-    function loadApiKey() {
-        const apiConnBadge = document.getElementById('api-conn-badge');
-        const apiKeyStatus = document.getElementById('apiKeyStatus');
-        const apiKeyInput = document.getElementById('apiKeyInput');
+    listEl.innerHTML='';
+    statusEl.textContent=`"${keyword}" 검색 중...`;
+    badge.className='badge bg-warning text-dark';
+    badge.textContent='검색 중...';
 
-        const st = getStorage();
-        const savedKey = st ? st.getItem(API_KEY_STORAGE_KEY) : _memoryKey;
+    const {regionCode}=getRegionAndLanguage();
+    updateTrendRegionInfo();
 
-        if (savedKey && savedKey.trim() !== '') {
-            API_KEY = savedKey.trim();
-            apiConnBadge.className = 'badge bg-success';
-            apiConnBadge.textContent = 'API 키 등록됨';
+    try{
+      const {after,before,label}=getTimeRangeConfig();
+      const categoryId=CATEGORIES[currentCategory]||'';
 
-            apiKeyStatus.textContent =
-                (_storageMode === 'localStorage')
-                    ? '이 브라우저에 저장된 본인 API 키를 사용 중입니다. (해제 전까지 유지)'
-                    : '브라우저 설정으로 저장소 접근이 막혀 메모리로만 사용 중입니다. (새로고침/재시작 시 초기화)';
+      let base=`${BASE_URL}search?part=snippet&type=video&maxResults=50&order=relevance&regionCode=${regionCode}&q=${encodeURIComponent(keyword)}&key=${API_KEY}`;
+      if(categoryId && currentCategory!=='Live') base+=`&videoCategoryId=${categoryId}`;
 
-            if (apiKeyInput) apiKeyInput.value = '';
-        } else {
-            API_KEY = null;
-            apiConnBadge.className = 'badge bg-secondary';
-            apiConnBadge.textContent = 'API 키 미등록';
-            apiKeyStatus.textContent = '상단 입력창에 본인 API 키를 저장해 주세요.';
-        }
+      let timeQuery='';
+      if(after) timeQuery+=`&publishedAfter=${after.toISOString()}`;
+      if(before) timeQuery+=`&publishedBefore=${before.toISOString()}`;
+
+      let url=base+timeQuery;
+      let sr=await fetch(url);
+      let sd=await sr.json();
+      if(sd.error) throw {ytError:sd.error};
+
+      let items=sd.items||[];
+      if(items.length===0 && timeQuery){
+        url=base;
+        sr=await fetch(url);
+        sd=await sr.json();
+        if(sd.error) throw {ytError:sd.error};
+        items=sd.items||[];
+      }
+
+      if(items.length===0){
+        currentBaseVideos=[]; currentChannelStatsMap={};
+        renderVideoList([], {});
+        updateTrendKeywords([]);
+        statusEl.textContent=`"${keyword}" 검색 결과가 없습니다.`;
+        document.getElementById('time-info').textContent='검색 결과 없음.';
+        badge.className='badge bg-warning text-dark';
+        badge.textContent='검색 0개';
+        currentSearchKeyword=keyword;
+        return;
+      }
+
+      const ids=items.map(it=>it.id && it.id.videoId).filter(Boolean);
+      const vr=await fetch(`${BASE_URL}videos?part=snippet,contentDetails,statistics&id=${ids.join(',')}&key=${API_KEY}`);
+      const vd=await vr.json();
+      if(vd.error) throw {ytError:vd.error};
+
+      let vids=vd.items||[];
+      vids.sort((a,b)=>parseInt(b.statistics?.viewCount||'0',10)-parseInt(a.statistics?.viewCount||'0',10));
+
+      let within=filterVideosByTimeRange(vids);
+      const timeInfoEl=document.getElementById('time-info');
+      if(within.length===0){
+        within=vids;
+        timeInfoEl.textContent='⚠️ 선택한 기간에 해당하는 검색 결과가 적어 전체 검색 결과를 표시합니다.';
+      }else{
+        timeInfoEl.textContent=`기준: ${label} 업로드된 영상 중 "${keyword}" 관련 인기 영상만 표시 중입니다.`;
+      }
+
+      currentBaseVideos=within;
+      currentSearchKeyword=keyword;
+      currentChannelStatsMap=await fetchChannelStats(within);
+
+      updateVideoListAndStatus();
+      buildAndRenderTrendKeywords();
+
+      badge.className='badge bg-success';
+      badge.textContent='검색 완료';
+    }catch(err){
+      console.error(err);
+      if(err.ytError) statusEl.innerHTML=getFriendlyErrorMessage(err.ytError,`⚠️ "${keyword}" 검색에 실패했습니다.`);
+      else statusEl.innerHTML='⚠️ 검색 API 호출에 실패했습니다.<br>API 키/쿼터/리퍼러(도메인) 제한을 확인해 주세요.';
+      badge.className='badge bg-danger';
+      badge.textContent='검색 오류';
+      updateTrendKeywords([]);
     }
-
-    function saveApiKey() {
-        const apiKeyInput = document.getElementById('apiKeyInput');
-        const newKey = (apiKeyInput.value || '').trim();
-        const apiConnBadge = document.getElementById('api-conn-badge');
-        const apiKeyStatus = document.getElementById('apiKeyStatus');
-
-        if (!newKey) {
-            alert('API 키를 입력해 주세요.');
-            return;
-        }
-
-        API_KEY = newKey;
-
-        const st = getStorage();
-        if (st) {
-            st.setItem(API_KEY_STORAGE_KEY, newKey);
-            apiKeyStatus.textContent = '이 브라우저에 저장된 본인 API 키를 사용 중입니다. (해제 전까지 유지)';
-        } else {
-            _memoryKey = newKey;
-            apiKeyStatus.textContent = '브라우저 설정으로 저장소 접근이 막혀 메모리로만 사용 중입니다. (새로고침/재시작 시 초기화)';
-        }
-
-        apiConnBadge.className = 'badge bg-success';
-        apiConnBadge.textContent = 'API 키 등록됨';
-        apiKeyInput.value = '';
-
-        alert(st
-            ? 'API 키가 저장/변경되었습니다. (이 브라우저에서 해제 전까지 유지됩니다)'
-            : 'API 키가 적용되었습니다. (저장이 막혀 이번 실행 동안만 유지됩니다)'
-        );
-    }
-
-    function clearApiKey() {
-        const st = getStorage();
-        try { if (st) st.removeItem(API_KEY_STORAGE_KEY); } catch (e) {}
-        _memoryKey = null;
-        API_KEY = null;
-
-        const apiConnBadge = document.getElementById('api-conn-badge');
-        const apiKeyStatus = document.getElementById('apiKeyStatus');
-
-        apiConnBadge.className = 'badge bg-secondary';
-        apiConnBadge.textContent = 'API 키 미등록';
-        apiKeyStatus.textContent = '상단 입력창에 본인 API 키를 저장해 주세요.';
-
-        document.getElementById('video-list').innerHTML = '';
-        document.getElementById('api-status').textContent = 'API 키가 해제되었습니다. 다시 사용하려면 API 키를 등록해 주세요.';
-        document.getElementById('trend-keyword-list').innerHTML = '<li><span class="trend-keyword">API 키를 먼저 등록해 주세요.</span></li>';
-
-        alert('API 키가 해제되었습니다.');
-    }
-    /* ----------------------------- */
-
-    function getFriendlyErrorMessage(errorObj, contextText) {
-        const reason = errorObj?.errors?.[0]?.reason || '';
-        const message = errorObj?.message || '';
-        let prefix = contextText || 'API 호출 중 오류가 발생했습니다.';
-        switch (reason) {
-            case 'quotaExceeded':
-                return `${prefix}<br>⚠️ 오늘 YouTube API 쿼터를 모두 사용했습니다.`;
-            case 'accessNotConfigured':
-                return `${prefix}<br>⚠️ YouTube Data API v3 사용 설정이 되어 있지 않습니다.`;
-            case 'ipRefererBlocked':
-            case 'dailyLimitExceeded':
-            case 'keyInvalid':
-            case 'forbidden':
-                return `${prefix}<br>⚠️ API 키 설정(도메인/IP/유효성)을 확인해 주세요.`;
-            default:
-                return `${prefix}<br>(${message || '알 수 없는 오류입니다.'})`;
-        }
-    }
-
-    async function fetchMostPopularForCategory(regionCode, categoryId) {
-        let url = `${BASE_URL}videos?part=snippet,contentDetails,statistics&chart=mostPopular&regionCode=${regionCode}&maxResults=50&key=${API_KEY}`;
-        if (categoryId) url += `&videoCategoryId=${categoryId}`;
-        const response = await fetch(url);
-        const data = await response.json();
-        if (data.error) throw { ytError: data.error };
-        return data.items || [];
-    }
-
-    async function fetchMusicVideos(regionCode, categoryId, timeConfig) {
-        const { after, before } = timeConfig;
-        let searchUrl = `${BASE_URL}search?part=snippet&type=video&maxResults=50&order=viewCount&regionCode=${regionCode}&videoCategoryId=${categoryId}&key=${API_KEY}`;
-        if (after) searchUrl += `&publishedAfter=${after.toISOString()}`;
-        if (before) searchUrl += `&publishedBefore=${before.toISOString()}`;
-        const searchResp = await fetch(searchUrl);
-        const searchData = await searchResp.json();
-        if (searchData.error) throw { ytError: searchData.error };
-        const items = searchData.items || [];
-        if (items.length === 0) return [];
-        const videoIds = items.map(it => it.id && it.id.videoId).filter(Boolean);
-        const videosUrl = `${BASE_URL}videos?part=snippet,contentDetails,statistics&id=${videoIds.join(',')}&key=${API_KEY}`;
-        const videosResp = await fetch(videosUrl);
-        const videosData = await videosResp.json();
-        if (videosData.error) throw { ytError: videosData.error };
-        return videosData.items || [];
-    }
-
-    async function fetchPopularVideos(categoryId) {
-        const videoListDiv = document.getElementById('video-list');
-        const apiStatusP = document.getElementById('api-status');
-        const apiConnBadge = document.getElementById('api-conn-badge');
-
-        if (!API_KEY) {
-            videoListDiv.innerHTML = '';
-            apiStatusP.textContent = '먼저 상단에서 본인 YouTube API 키를 등록해 주세요.';
-            apiConnBadge.className = 'badge bg-secondary';
-            apiConnBadge.textContent = 'API 키 미등록';
-            return;
-        }
-
-        videoListDiv.innerHTML = '';
-        apiStatusP.textContent = '데이터를 불러오는 중입니다...';
-        apiConnBadge.className = 'badge bg-warning text-dark';
-        apiConnBadge.textContent = '요청 중...';
-
-        const { regionCode } = getRegionAndLanguage();
-        const timeConfig = getTimeRangeConfig();
-        updateTrendRegionInfo();
-
-        try {
-            let allItems = [];
-
-            if (!categoryId) {
-                const results = await Promise.allSettled(
-                    ALL_CATEGORY_IDS.map(id => fetchMostPopularForCategory(regionCode, id))
-                );
-                let firstError = null;
-
-                results.forEach(r => {
-                    if (r.status === 'fulfilled') {
-                        if (Array.isArray(r.value)) allItems = allItems.concat(r.value);
-                    } else {
-                        if (!firstError && r.reason?.ytError) firstError = r.reason;
-                        console.warn('카테고리별 호출 실패(무시):', r.reason);
-                    }
-                });
-
-                if (allItems.length === 0 && firstError) throw firstError;
-            } else if (categoryId === '10' && timeConfig.after) {
-                allItems = await fetchMusicVideos(regionCode, categoryId, timeConfig);
-            } else {
-                const arr = await fetchMostPopularForCategory(regionCode, categoryId);
-                allItems = allItems.concat(arr);
-            }
-
-            if (allItems.length === 0) {
-                currentBaseVideos = [];
-                currentChannelStatsMap = {};
-                renderVideoList([], {});
-                updateTrendKeywords([]);
-                apiStatusP.textContent = '표시할 영상이 없습니다. (이 카테고리/지역에서 인기 영상이 없거나 API 쿼터 제한일 수 있습니다)';
-                document.getElementById('time-info').textContent = '기준: 선택한 기간에 해당하는 인기 영상이 없을 수 있습니다.';
-                apiConnBadge.className = 'badge bg-warning text-dark';
-                apiConnBadge.textContent = '데이터 없음';
-                currentSearchKeyword = '';
-                return;
-            }
-
-            const uniqueMap = new Map();
-            allItems.forEach(v => {
-                const vid = v.id;
-                if (!uniqueMap.has(vid)) uniqueMap.set(vid, v);
-            });
-
-            let combinedItems = Array.from(uniqueMap.values());
-            combinedItems.sort((a, b) => {
-                const va = parseInt(a.statistics?.viewCount || '0', 10);
-                const vb = parseInt(b.statistics?.viewCount || '0', 10);
-                return vb - va;
-            });
-
-            let withinRange = filterVideosByTimeRange(combinedItems);
-            const timeInfoEl = document.getElementById('time-info');
-            const { label } = timeConfig;
-
-            if (withinRange.length === 0) {
-                withinRange = combinedItems;
-                if (timeInfoEl) {
-                    timeInfoEl.textContent =
-                        (categoryId === '10')
-                            ? '⚠️ 최근 Music 트렌드가 적어 전체 인기 영상 목록을 표시합니다. (신곡 업데이트 확인)'
-                            : '⚠️ 선택한 기간에 해당하는 인기 영상이 거의 없어 전체 인기 영상 목록을 표시합니다.';
-                }
-            } else {
-                if (timeInfoEl) timeInfoEl.textContent = `기준: ${label} 업로드된 인기 영상만 표시 중입니다.`;
-            }
-
-            currentBaseVideos = withinRange;
-            currentSearchKeyword = '';
-
-            const channelStatsMap = await fetchChannelStats(withinRange);
-            currentChannelStatsMap = channelStatsMap;
-
-            updateVideoListAndStatus();
-            buildAndRenderTrendKeywords();
-
-            apiConnBadge.className = 'badge bg-success';
-            apiConnBadge.textContent = 'API 연결 정상';
-
-        } catch (error) {
-            console.error('API 호출 중 오류 발생:', error);
-            if (error.ytError) {
-                apiStatusP.innerHTML = getFriendlyErrorMessage(error.ytError, '⚠️ 인기 영상 목록을 가져오는 데 실패했습니다.');
-            } else {
-                apiStatusP.innerHTML = '⚠️ API 호출에 실패했습니다.<br>API 키/쿼터/리퍼러(도메인) 제한을 확인해 주세요.';
-            }
-            apiConnBadge.className = 'badge bg-danger';
-            apiConnBadge.textContent = '오류';
-            updateTrendKeywords([]);
-        }
-    }
-
-    async function fetchLiveVideos() {
-        const videoListDiv = document.getElementById('video-list');
-        const apiStatusP = document.getElementById('api-status');
-        const apiConnBadge = document.getElementById('api-conn-badge');
-
-        if (!API_KEY) {
-            videoListDiv.innerHTML = '';
-            apiStatusP.textContent = '먼저 상단에서 본인 YouTube API 키를 등록해 주세요.';
-            apiConnBadge.className = 'badge bg-secondary';
-            apiConnBadge.textContent = 'API 키 미등록';
-            return;
-        }
-
-        videoListDiv.innerHTML = '';
-        apiStatusP.textContent = '라이브 방송을 불러오는 중입니다...';
-        apiConnBadge.className = 'badge bg-warning text-dark';
-        apiConnBadge.textContent = '요청 중...';
-
-        const { regionCode } = getRegionAndLanguage();
-        updateTrendRegionInfo();
-
-        try {
-            const searchUrl =
-                `${BASE_URL}search?part=snippet&type=video&maxResults=50` +
-                `&order=viewCount&regionCode=${regionCode}` +
-                `&eventType=live&key=${API_KEY}`;
-
-            const searchResp = await fetch(searchUrl);
-            const searchData = await searchResp.json();
-            if (searchData.error) throw { ytError: searchData.error };
-
-            const items = searchData.items || [];
-            if (items.length === 0) {
-                currentBaseVideos = [];
-                currentChannelStatsMap = {};
-                renderVideoList([], {});
-                updateTrendKeywords([]);
-                apiStatusP.textContent = '현재 이 지역에서 인기 라이브 방송이 없습니다.';
-                document.getElementById('time-info').textContent = '라이브 방송 없음.';
-                apiConnBadge.className = 'badge bg-warning text-dark';
-                apiConnBadge.textContent = '라이브 0개';
-                currentSearchKeyword = '';
-                return;
-            }
-
-            const videoIds = items.map(it => it.id && it.id.videoId).filter(Boolean);
-            const videosUrl =
-                `${BASE_URL}videos?part=snippet,contentDetails,statistics` +
-                `&id=${videoIds.join(',')}&key=${API_KEY}`;
-
-            const videosResp = await fetch(videosUrl);
-            const videosData = await videosResp.json();
-            if (videosData.error) throw { ytError: videosData.error };
-
-            let videoItems = videosData.items || [];
-            videoItems.sort((a, b) => {
-                const va = parseInt(a.statistics?.viewCount || '0', 10);
-                const vb = parseInt(b.statistics?.viewCount || '0', 10);
-                return vb - va;
-            });
-
-            currentBaseVideos = videoItems;
-            currentSearchKeyword = '';
-
-            const channelStatsMap = await fetchChannelStats(videoItems);
-            currentChannelStatsMap = channelStatsMap;
-
-            document.getElementById('time-info').textContent =
-                '기준: 현재 라이브 방송 중인 영상(조회수 높은 순)을 표시합니다. (기간 필터는 라이브에는 적용되지 않습니다)';
-
-            updateVideoListAndStatus();
-            buildAndRenderTrendKeywords();
-
-            apiConnBadge.className = 'badge bg-success';
-            apiConnBadge.textContent = 'API 연결 정상';
-
-        } catch (error) {
-            console.error('라이브 API 호출 중 오류 발생:', error);
-            if (error.ytError) {
-                apiStatusP.innerHTML = getFriendlyErrorMessage(error.ytError, '⚠️ 라이브 방송 목록을 가져오는 데 실패했습니다.');
-            } else {
-                apiStatusP.innerHTML = '⚠️ 라이브 API 호출에 실패했습니다.<br>API 키/쿼터/리퍼러(도메인) 제한을 확인해 주세요.';
-            }
-            apiConnBadge.className = 'badge bg-danger';
-            apiConnBadge.textContent = '오류';
-            updateTrendKeywords([]);
-        }
-    }
-
-    function updateSocialLinks(keyword) {
-        const row = document.getElementById('social-link-row');
-        const yt = document.getElementById('ytLink');
-        const ig = document.getElementById('igLink');
-        const tt = document.getElementById('ttLink');
-        if (!row || !yt || !ig || !tt) return;
-
-        const trimmed = (keyword || '').trim();
-        if (!trimmed) {
-            row.style.display = 'none';
-            yt.removeAttribute('href'); ig.removeAttribute('href'); tt.removeAttribute('href');
-            return;
-        }
-        const tag = trimmed.replace(/^#/, '');
-        const encoded = encodeURIComponent(tag);
-        yt.href = `https://www.youtube.com/results?search_query=${encoded}`;
-        ig.href = `https://www.instagram.com/explore/tags/${encoded}/`;
-        tt.href = `https://www.tiktok.com/tag/${encoded}`;
-        row.style.display = 'block';
-    }
-
-    async function searchVideosByKeyword(keyword) {
-        const videoListDiv = document.getElementById('video-list');
-        const apiStatusP = document.getElementById('api-status');
-        const apiConnBadge = document.getElementById('api-conn-badge');
-
-        updateSocialLinks(keyword);
-
-        if (!API_KEY) {
-            videoListDiv.innerHTML = '';
-            apiStatusP.textContent = '먼저 상단에서 본인 YouTube API 키를 등록해 주세요.';
-            apiConnBadge.className = 'badge bg-secondary';
-            apiConnBadge.textContent = 'API 키 미등록';
-            return;
-        }
-
-        videoListDiv.innerHTML = '';
-        apiStatusP.textContent = `"${keyword}" 검색 중...`;
-        apiConnBadge.className = 'badge bg-warning text-dark';
-        apiConnBadge.textContent = '검색 중...';
-
-        const { regionCode } = getRegionAndLanguage();
-        updateTrendRegionInfo();
-
-        try {
-            const { after, before, label } = getTimeRangeConfig();
-            const categoryId = CATEGORIES[currentCategory] || '';
-
-            let searchBase =
-                `${BASE_URL}search?part=snippet&type=video&maxResults=50&order=relevance` +
-                `&regionCode=${regionCode}&q=${encodeURIComponent(keyword)}&key=${API_KEY}`;
-
-            if (categoryId && currentCategory !== 'Live') searchBase += `&videoCategoryId=${categoryId}`;
-
-            let timeQuery = '';
-            if (after) timeQuery += `&publishedAfter=${after.toISOString()}`;
-            if (before) timeQuery += `&publishedBefore=${before.toISOString()}`;
-
-            let searchUrl = searchBase + timeQuery;
-            let response = await fetch(searchUrl);
-            let searchData = await response.json();
-            if (searchData.error) throw { ytError: searchData.error };
-
-            let items = searchData.items || [];
-            if (items.length === 0 && timeQuery) {
-                searchUrl = searchBase;
-                response = await fetch(searchUrl);
-                searchData = await response.json();
-                if (searchData.error) throw { ytError: searchData.error };
-                items = searchData.items || [];
-            }
-
-            if (items.length === 0) {
-                currentBaseVideos = [];
-                currentChannelStatsMap = {};
-                renderVideoList([], {});
-                updateTrendKeywords([]);
-                apiStatusP.textContent = `"${keyword}" 검색 결과가 없습니다.`;
-                document.getElementById('time-info').textContent = '검색 결과 없음.';
-                apiConnBadge.className = 'badge bg-warning text-dark';
-                apiConnBadge.textContent = '검색 0개';
-                currentSearchKeyword = keyword;
-                return;
-            }
-
-            const videoIds = items.map(it => it.id && it.id.videoId).filter(Boolean);
-            const videosUrl =
-                `${BASE_URL}videos?part=snippet,contentDetails,statistics&id=${videoIds.join(',')}&key=${API_KEY}`;
-
-            const videosResp = await fetch(videosUrl);
-            const videosData = await videosResp.json();
-            if (videosData.error) throw { ytError: videosData.error };
-
-            let videoItems = videosData.items || [];
-            videoItems.sort((a, b) => {
-                const va = parseInt(a.statistics?.viewCount || '0', 10);
-                const vb = parseInt(b.statistics?.viewCount || '0', 10);
-                return vb - va;
-            });
-
-            let withinRange = filterVideosByTimeRange(videoItems);
-            const timeInfoEl = document.getElementById('time-info');
-
-            if (withinRange.length === 0) {
-                withinRange = videoItems;
-                if (timeInfoEl) timeInfoEl.textContent = '⚠️ 선택한 기간에 해당하는 검색 결과가 적어 전체 검색 결과를 표시합니다.';
-            } else {
-                if (timeInfoEl) timeInfoEl.textContent = `기준: ${label} 업로드된 영상 중 "${keyword}" 관련 인기 영상만 표시 중입니다.`;
-            }
-
-            currentBaseVideos = withinRange;
-            currentSearchKeyword = keyword;
-
-            const channelStatsMap = await fetchChannelStats(withinRange);
-            currentChannelStatsMap = channelStatsMap;
-
-            updateVideoListAndStatus();
-            buildAndRenderTrendKeywords();
-
-            apiConnBadge.className = 'badge bg-success';
-            apiConnBadge.textContent = '검색 완료';
-
-        } catch (error) {
-            console.error('검색 API 호출 중 오류 발생:', error);
-            if (error.ytError) {
-                apiStatusP.innerHTML = getFriendlyErrorMessage(error.ytError, `⚠️ "${keyword}" 검색에 실패했습니다.`);
-            } else {
-                apiStatusP.innerHTML = '⚠️ 검색 API 호출에 실패했습니다.<br>API 키/쿼터/리퍼러(도메인) 제한을 확인해 주세요.';
-            }
-            apiConnBadge.className = 'badge bg-danger';
-            apiConnBadge.textContent = '검색 오류';
-            updateTrendKeywords([]);
-        }
-    }
-
-    async function fetchChannelStats(videoItems) {
-        const channelIds = Array.from(new Set(videoItems.map(v => v.snippet.channelId).filter(Boolean)));
-        if (channelIds.length === 0) return {};
-
-        const CHUNK_SIZE = 50;
-        const map = {};
-
-        for (let i = 0; i < channelIds.length; i += CHUNK_SIZE) {
-            const chunk = channelIds.slice(i, i + CHUNK_SIZE);
-            const url = `${BASE_URL}channels?part=statistics&id=${chunk.join(',')}&key=${API_KEY}`;
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                if (data.error) { console.error('채널 정보 호출 오류:', data.error); continue; }
-                (data.items || []).forEach(ch => {
-                    const id = ch.id;
-                    const subs = ch.statistics.subscriberCount ? parseInt(ch.statistics.subscriberCount) : 0;
-                    map[id] = subs;
-                });
-            } catch (e) {
-                console.error('채널 정보 호출 오류:', e);
-            }
-        }
-        return map;
-    }
-
-    function matchSubscriberRange(subscribers, rangeKey) {
-        if (!subscribers || subscribers <= 0) return false;
-        switch (rangeKey) {
-            case 'sub_1_1000': return subscribers >= 1 && subscribers < 1000;
-            case 'sub_1000_10000': return subscribers >= 1000 && subscribers < 10000;
-            case 'sub_10000_40000': return subscribers >= 10000 && subscribers < 40000;
-            case 'sub_50000_plus': return subscribers >= 50000;
-            default: return true;
-        }
-    }
-
-    function getFilteredVideos() {
-        let list = currentBaseVideos.slice();
-
-        if (currentDurationFilter !== 'all' && currentCategory !== 'Live') {
-            list = list.filter(v => {
-                const seconds = parseDurationSeconds(v.contentDetails?.duration || '');
-                if (currentDurationFilter === 'short') return seconds > 0 && seconds <= 60;
-                if (currentDurationFilter === 'mid') return seconds > 60 && seconds <= 600;
-                if (currentDurationFilter === 'long') return seconds > 600;
-                return true;
-            });
-        }
-
-        if (!(currentSubscriberRanges.size === 1 && currentSubscriberRanges.has('all'))) {
-            list = list.filter(v => {
-                const subs = currentChannelStatsMap[v.snippet.channelId] || 0;
-                for (const rangeKey of currentSubscriberRanges) {
-                    if (matchSubscriberRange(subs, rangeKey)) return true;
-                }
-                return false;
-            });
-        }
-
-        list.sort((a, b) => {
-            const va = parseInt(a.statistics?.viewCount || '0', 10);
-            const vb = parseInt(b.statistics?.viewCount || '0', 10);
-            const la = parseInt(a.statistics?.likeCount || '0', 10);
-            const lb = parseInt(b.statistics?.likeCount || '0', 10);
-
-            const ta = new Date(a.snippet.publishedAt);
-            const tb = new Date(b.snippet.publishedAt);
-
-            const ha = Math.max((Date.now() - ta.getTime()) / (1000 * 60 * 60), 1 / 60);
-            const hb = Math.max((Date.now() - tb.getTime()) / (1000 * 60 * 60), 1 / 60);
-
-            const likeRateA = va > 0 ? la / va : 0;
-            const likeRateB = vb > 0 ? lb / vb : 0;
-
-            const speedA = va / ha;
-            const speedB = vb / hb;
-
-            const subsA = Math.max((currentChannelStatsMap[a.snippet.channelId] || 0), 1);
-            const subsB = Math.max((currentChannelStatsMap[b.snippet.channelId] || 0), 1);
-            const vpsA = va / subsA;
-            const vpsB = vb / subsB;
-
-            switch (currentSortMode) {
-                case 'viewsAsc': return va - vb;
-                case 'likeRateDesc': return likeRateB - likeRateA;
-                case 'viewsPerHourDesc': return speedB - speedA;
-                case 'viewsPerSubDesc': return vpsB - vpsA;
-                case 'viewsDesc':
-                default: return vb - va;
-            }
+  }
+
+  async function fetchChannelStats(videoItems){
+    const channelIds=Array.from(new Set(videoItems.map(v=>v.snippet.channelId).filter(Boolean)));
+    if(channelIds.length===0) return {};
+    const CHUNK_SIZE=50;
+    const map={};
+
+    for(let i=0;i<channelIds.length;i+=CHUNK_SIZE){
+      const chunk=channelIds.slice(i,i+CHUNK_SIZE);
+      const url=`${BASE_URL}channels?part=statistics&id=${chunk.join(',')}&key=${API_KEY}`;
+      try{
+        const r=await fetch(url);
+        const d=await r.json();
+        if(d.error) continue;
+        (d.items||[]).forEach(ch=>{
+          const id=ch.id;
+          const subs=ch.statistics.subscriberCount?parseInt(ch.statistics.subscriberCount):0;
+          map[id]=subs;
         });
-
-        return list;
+      }catch(e){}
     }
+    return map;
+  }
 
-    function updateVideoListAndStatus() {
-        const apiStatusP = document.getElementById('api-status');
-        const list = getFilteredVideos();
-        renderVideoList(list, currentChannelStatsMap);
-
-        if (!apiStatusP) return;
-
-        if (currentSearchKeyword) {
-            apiStatusP.textContent = `"${currentSearchKeyword}" 검색 결과: ${list.length}개`;
-        } else if (currentCategory === 'Live') {
-            apiStatusP.textContent = `현재 라이브 방송: ${list.length}개`;
-        } else {
-            apiStatusP.textContent = `총 ${list.length}개의 영상을 표시합니다.`;
-        }
+  function matchSubscriberRange(subscribers, rangeKey){
+    if(!subscribers||subscribers<=0) return false;
+    switch(rangeKey){
+      case 'sub_1_1000': return subscribers>=1 && subscribers<1000;
+      case 'sub_1000_10000': return subscribers>=1000 && subscribers<10000;
+      case 'sub_10000_40000': return subscribers>=10000 && subscribers<40000;
+      case 'sub_50000_plus': return subscribers>=50000;
+      default: return true;
     }
+  }
 
-    function renderVideoList(videos, channelStatsMap = {}) {
-        const videoListDiv = document.getElementById('video-list');
-        videoListDiv.innerHTML = '';
-        videos.forEach(video => { videoListDiv.innerHTML += createVideoCard(video, channelStatsMap); });
-    }
+  function getFilteredVideos(){
+    let list=currentBaseVideos.slice();
 
-    function createVideoCard(video, channelStatsMap) {
-        const title = video.snippet.title;
-        const channelTitle = video.snippet.channelTitle;
-        const channelId = video.snippet.channelId;
-        const videoId = video.id;
-        const thumbnailUrl = video.snippet.thumbnails.medium.url;
-
-        const viewCount = video.statistics.viewCount ? parseInt(video.statistics.viewCount) : 0;
-        const likeCount = video.statistics.likeCount ? parseInt(video.statistics.likeCount) : 0;
-        const commentCount = video.statistics.commentCount ? parseInt(video.statistics.commentCount) : 0;
-
-        const subscriberCount = channelStatsMap[channelId] || 0;
-        const publishedAt = video.snippet.publishedAt;
-
-        const timeAgoText = timeAgo(publishedAt);
-
-        const publishedDate = new Date(publishedAt);
-        const hoursSinceUpload = Math.max((Date.now() - publishedDate.getTime()) / (1000 * 60 * 60), 1 / 60);
-        const viewVelocity = viewCount > 0 ? viewCount / hoursSinceUpload : 0;
-
-        const likeRate = viewCount > 0 ? (likeCount / viewCount) * 100 : 0;
-        const commentRate = viewCount > 0 ? (commentCount / viewCount) * 100 : 0;
-
-        const durationSeconds = parseDurationSeconds(video.contentDetails?.duration || '');
-        const durationLabel = formatDurationLabel(durationSeconds);
-
-        let multiBadgeHtml = '';
-        if (subscriberCount > 0 && viewCount > 0) {
-            const multi = Math.floor(viewCount / subscriberCount);
-
-            let tag = '';
-            let cls = '';
-
-            if (multi >= 200) { tag = '초떡상'; cls = 'multi-200'; }
-            else if (multi >= 100) { tag = '떡상영상'; cls = 'multi-100'; }
-            else if (multi >= 50) { tag = '상승각'; cls = 'multi-50'; }
-            else if (multi >= 20) { tag = '관심'; cls = 'multi-20'; }
-
-            if (tag) multiBadgeHtml = `<span class="badge-multi ${cls}">x${multi} (${tag})</span>`;
-        }
-
-        return `
-        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-            <div class="video-card">
-                <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" style="position:relative;display:block;">
-                    <img src="${thumbnailUrl}" class="card-img-top" alt="${title}">
-                    ${
-                        durationLabel
-                            ? `<span style="
-                                position:absolute;
-                                right:4px;
-                                bottom:4px;
-                                background:rgba(0,0,0,0.8);
-                                color:#fff;
-                                font-size:0.75rem;
-                                padding:2px 4px;
-                                border-radius:3px;
-                            ">${durationLabel}</span>`
-                            : ''
-                    }
-                </a>
-                <div class="card-body">
-                    ${multiBadgeHtml ? `<div>${multiBadgeHtml}</div>` : ''}
-                    <h5 class="card-title">${title}</h5>
-                    <p class="card-text text-muted mb-1">${channelTitle}</p>
-                    <p class="card-text"><span class="badge badge-time">${timeAgoText}</span></p>
-                    <div>
-                        <span class="stats-badge badge-views">${formatNumber(viewCount)} 조회</span>
-                        <span class="stats-badge badge-likes">${formatNumber(likeCount)} 좋아요</span>
-                        <span class="stats-badge badge-comments">${formatNumber(commentCount)} 댓글</span>
-                        <span class="stats-badge badge-subscribers">${formatNumber(subscriberCount)} 구독</span>
-                    </div>
-                    <div class="mt-1">
-                        <span class="stats-badge badge-velocity">${formatNumber(Math.round(viewVelocity))}회/시간</span>
-                        <span class="stats-badge badge-likeRate">좋아요율 ${likeRate.toFixed(1)}%</span>
-                        <span class="stats-badge badge-commentRate">댓글비율 ${commentRate.toFixed(2)}%</span>
-                    </div>
-                </div>
-            </div>
-        </div>`;
-    }
-
-    function tokenizeText(text) {
-        if (!text) return [];
-        return text.toLowerCase().split(/[^0-9a-zA-Z가-힣ぁ-んァ-ン一-龯]+/g).filter(Boolean);
-    }
-    function isStopword(token) {
-        if (!token) return true;
-        if (STOPWORDS_COMMON.has(token)) return true;
-        if (STOPWORDS_KO.has(token)) return true;
-        if (STOPWORDS_EN.has(token)) return true;
-        if (STOPWORDS_JA.has(token)) return true;
-        return false;
-    }
-    function isValidToken(token) {
-        if (!token) return false;
-        if (token.length < 2) return false;
-        if (/^\d+$/.test(token)) return false;
-        if (isStopword(token)) return false;
+    if(currentDurationFilter!=='all' && currentCategory!=='Live'){
+      list=list.filter(v=>{
+        const seconds=parseDurationSeconds(v.contentDetails?.duration||'');
+        if(currentDurationFilter==='short') return seconds>0 && seconds<=60;
+        if(currentDurationFilter==='mid') return seconds>60 && seconds<=600;
+        if(currentDurationFilter==='long') return seconds>600;
         return true;
+      });
     }
 
-    function buildTrendKeywordsFromVideos(videos) {
-        const wordScoreMap = new Map();
-        videos.forEach(video => {
-            const title = video.snippet.title || '';
-            const tags = video.snippet.tags || [];
-            const views = parseInt(video.statistics?.viewCount || '0', 10);
-            const weight = views > 0 ? Math.log10(views + 1) : 1;
-
-            const text = title + ' ' + tags.join(' ') + ' ';
-            const tokens = tokenizeText(text);
-            const tokenSet = new Set(tokens);
-
-            tokenSet.forEach(tok => {
-                if (!isValidToken(tok)) return;
-                const prev = wordScoreMap.get(tok) || 0;
-                wordScoreMap.set(tok, prev + weight);
-            });
-        });
-
-        return Array.from(wordScoreMap.entries())
-            .map(([word, score]) => ({ word, score }))
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 30);
-    }
-
-    function updateTrendRegionInfo() {
-        const { regionCode } = getRegionAndLanguage();
-        const infoEl = document.getElementById('trend-region-info');
-        if (infoEl) infoEl.textContent = `지역: ${regionCode} 기준`;
-    }
-
-    function updateTrendUpdatedTime() {
-        const el = document.getElementById('trend-updated-time');
-        if (!el) return;
-        const now = new Date();
-        el.textContent = `기준: 현재 표시 중인 인기 영상(선택한 기간 기준)에서 자동 추출 · 업데이트 ${now.toLocaleTimeString()}`;
-    }
-
-    function updateTrendKeywords(keywordEntries) {
-        currentTrendKeywords = keywordEntries || [];
-        const listEl = document.getElementById('trend-keyword-list');
-        if (!listEl) return;
-
-        listEl.innerHTML = '';
-        if (!currentTrendKeywords.length) {
-            listEl.innerHTML = '<li><span class="trend-keyword">트렌드 키워드를 계산할 영상 데이터가 없습니다.</span></li>';
-            return;
+    if(!(currentSubscriberRanges.size===1 && currentSubscriberRanges.has('all'))){
+      list=list.filter(v=>{
+        const subs=currentChannelStatsMap[v.snippet.channelId]||0;
+        for(const r of currentSubscriberRanges){
+          if(matchSubscriberRange(subs,r)) return true;
         }
-
-        currentTrendKeywords.forEach((item, idx) => {
-            const li = document.createElement('li');
-
-            const spanKeyword = document.createElement('span');
-            spanKeyword.className = 'trend-keyword';
-            spanKeyword.textContent = `${idx + 1}. ${item.word}`;
-
-            const spanScore = document.createElement('span');
-            spanScore.className = 'trend-score-badge';
-            spanScore.textContent = `score ${item.score.toFixed(1)}`;
-
-            spanKeyword.addEventListener('click', () => {
-                const searchInput = document.getElementById('searchInput');
-                const searchBtn = document.getElementById('searchBtn');
-                if (searchInput && searchBtn) {
-                    searchInput.value = item.word;
-                    searchBtn.click();
-                }
-            });
-
-            li.appendChild(spanKeyword);
-            li.appendChild(spanScore);
-            listEl.appendChild(li);
-        });
-
-        updateTrendUpdatedTime();
+        return false;
+      });
     }
 
-    function buildAndRenderTrendKeywords() {
-        if (!currentBaseVideos || currentBaseVideos.length === 0) {
-            updateTrendKeywords([]);
-            return;
-        }
-        updateTrendKeywords(buildTrendKeywordsFromVideos(currentBaseVideos));
+    list.sort((a,b)=>{
+      const va=parseInt(a.statistics?.viewCount||'0',10);
+      const vb=parseInt(b.statistics?.viewCount||'0',10);
+      const la=parseInt(a.statistics?.likeCount||'0',10);
+      const lb=parseInt(b.statistics?.likeCount||'0',10);
+
+      const ta=new Date(a.snippet.publishedAt);
+      const tb=new Date(b.snippet.publishedAt);
+      const ha=Math.max((Date.now()-ta.getTime())/(1000*60*60), 1/60);
+      const hb=Math.max((Date.now()-tb.getTime())/(1000*60*60), 1/60);
+
+      const likeRateA=va>0?la/va:0;
+      const likeRateB=vb>0?lb/vb:0;
+
+      const speedA=va/ha;
+      const speedB=vb/hb;
+
+      const subsA=Math.max((currentChannelStatsMap[a.snippet.channelId]||0),1);
+      const subsB=Math.max((currentChannelStatsMap[b.snippet.channelId]||0),1);
+      const vpsA=va/subsA;
+      const vpsB=vb/subsB;
+
+      switch(currentSortMode){
+        case 'viewsAsc': return va-vb;
+        case 'likeRateDesc': return likeRateB-likeRateA;
+        case 'viewsPerHourDesc': return speedB-speedA;
+        case 'viewsPerSubDesc': return vpsB-vpsA;
+        case 'viewsDesc':
+        default: return vb-va;
+      }
+    });
+
+    return list;
+  }
+
+  function updateVideoListAndStatus(){
+    const statusEl=document.getElementById('api-status');
+    const list=getFilteredVideos();
+    renderVideoList(list, currentChannelStatsMap);
+
+    if(currentSearchKeyword) statusEl.textContent=`"${currentSearchKeyword}" 검색 결과: ${list.length}개`;
+    else if(currentCategory==='Live') statusEl.textContent=`현재 라이브 방송: ${list.length}개`;
+    else statusEl.textContent=`총 ${list.length}개의 영상을 표시합니다.`;
+  }
+
+  function renderVideoList(videos, channelStatsMap={}){
+    const listEl=document.getElementById('video-list');
+    listEl.innerHTML='';
+    videos.forEach(v=>{ listEl.innerHTML += createVideoCard(v, channelStatsMap); });
+  }
+
+  /* ✅ 여기서 "⚡ 속도떡상 / 🔥 비율떡상 / 💥 더블떡상" 적용 */
+  function getBoomBadge(viewCount, viewVelocityPerHour, subscriberCount){
+    // 속도 기준(시간당 조회수) → x20 / x50 / x100 / x200
+    // ※ 기준값은 대시보드에서 튜닝 가능
+    const speedX =
+      (viewVelocityPerHour >= 20000) ? 200 :
+      (viewVelocityPerHour >= 10000) ? 100 :
+      (viewVelocityPerHour >= 5000)  ? 50  :
+      (viewVelocityPerHour >= 2000)  ? 20  : 0;
+
+    // 비율 기준(조회수 ÷ 구독자) → x20 / x50 / x100 / x200
+    let ratioX = 0;
+    if(subscriberCount > 0 && viewCount > 0){
+      const ratio = viewCount / subscriberCount;
+      ratioX =
+        (ratio >= 200) ? 200 :
+        (ratio >= 100) ? 100 :
+        (ratio >= 50)  ? 50  :
+        (ratio >= 20)  ? 20  : 0;
     }
 
-    // ✅ 즐겨찾기: 로드/저장/렌더
-    function loadFavorites() {
-        try {
-            const raw = window.localStorage.getItem('ytTrendFavorites');
-            favoriteGroups = raw ? JSON.parse(raw) : {};
-        } catch (e) {
-            console.warn('즐겨찾기 로드 실패:', e);
-            favoriteGroups = {};
-        }
-        renderFavoriteButtons();
+    const isSpeed = speedX > 0;
+    const isRatio = ratioX > 0;
+
+    if(isSpeed && isRatio){
+      // 둘 다 만족 → 💥 더블떡상
+      return `<span class="boom-badge boom-double">💥 더블떡상</span>`;
     }
-    function saveFavorites() {
-        try {
-            window.localStorage.setItem('ytTrendFavorites', JSON.stringify(favoriteGroups));
-        } catch (e) {
-            console.warn('즐겨찾기 저장 실패:', e);
-        }
+    if(isSpeed){
+      return `<span class="boom-badge boom-speed">⚡ x${speedX} 속도떡상</span>`;
     }
-
-    // ✅ 즐겨찾기 버튼: 클릭하면 "상세/수정 모달" 열기
-    function renderFavoriteButtons() {
-        const wrapper = document.getElementById('favorite-buttons');
-        if (!wrapper) return;
-
-        wrapper.innerHTML = '';
-        const names = Object.keys(favoriteGroups);
-
-        if (!names.length) {
-            wrapper.innerHTML = '<small class="text-muted">등록된 즐겨찾기가 없습니다.</small>';
-            return;
-        }
-
-        names.forEach(name => {
-            const groupDiv = document.createElement('div');
-            groupDiv.className = 'd-inline-flex align-items-center me-2 mb-1';
-
-            const btn = document.createElement('button');
-            btn.className = 'btn btn-sm btn-outline-warning me-1 fav-group-btn';
-            btn.textContent = `⭐ ${name}`;
-            btn.setAttribute('data-group', name);
-
-            const delBtn = document.createElement('button');
-            delBtn.className = 'btn btn-sm btn-outline-secondary fav-group-del';
-            delBtn.textContent = '삭제';
-            delBtn.setAttribute('data-group', name);
-
-            groupDiv.appendChild(btn);
-            groupDiv.appendChild(delBtn);
-            wrapper.appendChild(groupDiv);
-        });
-
-        wrapper.querySelectorAll('.fav-group-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const name = btn.getAttribute('data-group');
-                openFavoriteModal(name);
-            });
-        });
-
-        wrapper.querySelectorAll('.fav-group-del').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const name = btn.getAttribute('data-group');
-                if (favoriteGroups[name]) {
-                    delete favoriteGroups[name];
-                    saveFavorites();
-                    renderFavoriteButtons();
-                }
-            });
-        });
+    if(isRatio){
+      return `<span class="boom-badge boom-ratio">🔥 x${ratioX} 비율떡상</span>`;
     }
+    return '';
+  }
 
-    // ✅ 모달 열기/미리보기
-    function normalizeKeywords(kwStr) {
-        return (kwStr || '').split(/[,\s]+/).map(k => k.trim()).filter(k => k.length > 0);
-    }
+  function createVideoCard(video, channelStatsMap){
+    const title=video.snippet.title;
+    const channelTitle=video.snippet.channelTitle;
+    const channelId=video.snippet.channelId;
+    const videoId=video.id;
+    const thumbnailUrl=video.snippet.thumbnails.medium.url;
 
-    function openFavoriteModal(groupName) {
-        const keywords = favoriteGroups[groupName] || [];
+    const viewCount=video.statistics.viewCount?parseInt(video.statistics.viewCount):0;
+    const likeCount=video.statistics.likeCount?parseInt(video.statistics.likeCount):0;
+    const commentCount=video.statistics.commentCount?parseInt(video.statistics.commentCount):0;
 
-        document.getElementById('favEditOldName').value = groupName;
-        document.getElementById('favEditName').value = groupName;
-        document.getElementById('favEditKeywords').value = keywords.join(', ');
+    const subscriberCount=channelStatsMap[channelId]||0;
+    const publishedAt=video.snippet.publishedAt;
+    const timeAgoText=timeAgo(publishedAt);
 
-        document.getElementById('favEditPreviewTitle').textContent = `대태그: ${groupName}`;
-        document.getElementById('favEditPreviewKeywords').textContent = `소태그: ${keywords.join(', ')}`;
+    const publishedDate=new Date(publishedAt);
+    const hoursSinceUpload=Math.max((Date.now()-publishedDate.getTime())/(1000*60*60), 1/60);
+    const viewVelocity=viewCount>0?viewCount/hoursSinceUpload:0;
 
-        const modalEl = document.getElementById('favEditModal');
-        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modal.show();
+    const likeRate=viewCount>0?(likeCount/viewCount)*100:0;
+    const commentRate=viewCount>0?(commentCount/viewCount)*100:0;
 
-        // 입력 바뀔 때 미리보기 갱신
-        const nameInput = document.getElementById('favEditName');
-        const kwInput = document.getElementById('favEditKeywords');
-        const refreshPreview = () => {
-            const n = nameInput.value.trim();
-            const kws = normalizeKeywords(kwInput.value).join(', ');
-            document.getElementById('favEditPreviewTitle').textContent = `대태그: ${n || '(비어있음)'}`;
-            document.getElementById('favEditPreviewKeywords').textContent = `소태그: ${kws || '(비어있음)'}`;
-        };
-        nameInput.oninput = refreshPreview;
-        kwInput.oninput = refreshPreview;
-    }
+    const durationSeconds=parseDurationSeconds(video.contentDetails?.duration||'');
+    const durationLabel=formatDurationLabel(durationSeconds);
 
-    function applyFavoriteSearchByModalInputs() {
-        const name = document.getElementById('favEditName').value.trim();
-        const kws = normalizeKeywords(document.getElementById('favEditKeywords').value);
-        if (!name || kws.length === 0) {
-            alert('대태그/소태그를 확인해 주세요.');
-            return;
-        }
-        const combined = kws.join(' ');
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) searchInput.value = combined;
-        searchVideosByKeyword(combined);
+    // ✅ 떡상 배지(속도/비율/더블)
+    const boomBadgeHtml = getBoomBadge(viewCount, viewVelocity, subscriberCount);
 
-        // 모달 닫기
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('favEditModal')).hide();
-    }
-
-    function saveFavoriteFromModalInputs() {
-        const oldName = document.getElementById('favEditOldName').value.trim();
-        const newName = document.getElementById('favEditName').value.trim();
-        const kws = normalizeKeywords(document.getElementById('favEditKeywords').value);
-
-        if (!newName || kws.length === 0) {
-            alert('대태그 이름과 소태그 키워드를 모두 입력해 주세요.');
-            return;
-        }
-
-        // 이름 변경(리네임) 처리
-        if (oldName && oldName !== newName) {
-            // 같은 이름이 이미 존재하면 덮어쓸지
-            if (favoriteGroups[newName]) {
-                const ok = confirm(`"${newName}" 그룹이 이미 있습니다. 덮어쓸까요?`);
-                if (!ok) return;
+    return `
+      <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+        <div class="video-card">
+          <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank" style="position:relative;display:block;">
+            <img src="${thumbnailUrl}" class="card-img-top" alt="${title}">
+            ${
+              durationLabel
+                ? `<span style="position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,0.8);color:#fff;font-size:0.75rem;padding:2px 4px;border-radius:3px;">
+                     ${durationLabel}
+                   </span>`
+                : ''
             }
-            delete favoriteGroups[oldName];
+          </a>
+          <div class="card-body">
+            ${boomBadgeHtml ? `<div>${boomBadgeHtml}</div>` : ''}
+            <h5 class="card-title">${title}</h5>
+            <p class="card-text text-muted mb-1">${channelTitle}</p>
+            <p class="card-text"><span class="badge badge-time">${timeAgoText}</span></p>
+            <div>
+              <span class="stats-badge badge-views">${formatNumber(viewCount)} 조회</span>
+              <span class="stats-badge badge-likes">${formatNumber(likeCount)} 좋아요</span>
+              <span class="stats-badge badge-comments">${formatNumber(commentCount)} 댓글</span>
+              <span class="stats-badge badge-subscribers">${formatNumber(subscriberCount)} 구독</span>
+            </div>
+            <div class="mt-1">
+              <span class="stats-badge badge-velocity">${formatNumber(Math.round(viewVelocity))}회/시간</span>
+              <span class="stats-badge badge-likeRate">좋아요율 ${likeRate.toFixed(1)}%</span>
+              <span class="stats-badge badge-commentRate">댓글비율 ${commentRate.toFixed(2)}%</span>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function tokenizeText(text){
+    if(!text) return [];
+    return text.toLowerCase().split(/[^0-9a-zA-Z가-힣ぁ-んァ-ン一-龯]+/g).filter(Boolean);
+  }
+  function isStopword(token){
+    if(!token) return true;
+    if(STOPWORDS_COMMON.has(token)) return true;
+    if(STOPWORDS_KO.has(token)) return true;
+    if(STOPWORDS_EN.has(token)) return true;
+    if(STOPWORDS_JA.has(token)) return true;
+    return false;
+  }
+  function isValidToken(token){
+    if(!token) return false;
+    if(token.length<2) return false;
+    if(/^\d+$/.test(token)) return false;
+    if(isStopword(token)) return false;
+    return true;
+  }
+
+  function buildTrendKeywordsFromVideos(videos){
+    const map=new Map();
+    videos.forEach(video=>{
+      const title=video.snippet.title||'';
+      const tags=video.snippet.tags||[];
+      const views=parseInt(video.statistics?.viewCount||'0',10);
+      const weight=views>0?Math.log10(views+1):1;
+      const text=title+' '+tags.join(' ')+' ';
+      const tokens=tokenizeText(text);
+      const set=new Set(tokens);
+      set.forEach(tok=>{
+        if(!isValidToken(tok)) return;
+        map.set(tok,(map.get(tok)||0)+weight);
+      });
+    });
+    return Array.from(map.entries())
+      .map(([word,score])=>({word,score}))
+      .sort((a,b)=>b.score-a.score)
+      .slice(0,30);
+  }
+
+  function updateTrendRegionInfo(){
+    const {regionCode}=getRegionAndLanguage();
+    const el=document.getElementById('trend-region-info');
+    if(el) el.textContent=`지역: ${regionCode} 기준`;
+  }
+  function updateTrendUpdatedTime(){
+    const el=document.getElementById('trend-updated-time');
+    if(!el) return;
+    const now=new Date();
+    el.textContent=`기준: 현재 표시 중인 인기 영상(선택한 기간 기준)에서 자동 추출 · 업데이트 ${now.toLocaleTimeString()}`;
+  }
+  function updateTrendKeywords(entries){
+    const listEl=document.getElementById('trend-keyword-list');
+    listEl.innerHTML='';
+    if(!entries || entries.length===0){
+      listEl.innerHTML='<li><span class="trend-keyword">트렌드 키워드를 계산할 영상 데이터가 없습니다.</span></li>';
+      return;
+    }
+    entries.forEach((item,idx)=>{
+      const li=document.createElement('li');
+      const kw=document.createElement('span');
+      kw.className='trend-keyword';
+      kw.textContent=`${idx+1}. ${item.word}`;
+      const score=document.createElement('span');
+      score.className='trend-score-badge';
+      score.textContent=`score ${item.score.toFixed(1)}`;
+      kw.addEventListener('click',()=>{
+        const input=document.getElementById('searchInput');
+        input.value=item.word;
+        document.getElementById('searchBtn').click();
+      });
+      li.appendChild(kw); li.appendChild(score);
+      listEl.appendChild(li);
+    });
+    updateTrendUpdatedTime();
+  }
+  function buildAndRenderTrendKeywords(){
+    if(!currentBaseVideos || currentBaseVideos.length===0){ updateTrendKeywords([]); return; }
+    updateTrendKeywords(buildTrendKeywordsFromVideos(currentBaseVideos));
+  }
+
+  // 즐겨찾기
+  function loadFavorites(){
+    try{
+      const raw=window.localStorage.getItem('ytTrendFavorites');
+      favoriteGroups=raw?JSON.parse(raw):{};
+    }catch(e){ favoriteGroups={}; }
+    renderFavoriteButtons();
+  }
+  function saveFavorites(){
+    try{ window.localStorage.setItem('ytTrendFavorites',JSON.stringify(favoriteGroups)); }catch(e){}
+  }
+  function normalizeKeywords(kwStr){
+    return (kwStr||'').split(/[,\s]+/).map(k=>k.trim()).filter(Boolean);
+  }
+  function renderFavoriteButtons(){
+    const wrapper=document.getElementById('favorite-buttons');
+    wrapper.innerHTML='';
+    const names=Object.keys(favoriteGroups);
+    if(!names.length){
+      wrapper.innerHTML='<small class="text-muted">등록된 즐겨찾기가 없습니다.</small>';
+      return;
+    }
+    names.forEach(name=>{
+      const groupDiv=document.createElement('div');
+      groupDiv.className='d-inline-flex align-items-center me-2 mb-1';
+
+      const btn=document.createElement('button');
+      btn.className='btn btn-sm btn-outline-warning me-1 fav-group-btn';
+      btn.textContent=`⭐ ${name}`;
+      btn.setAttribute('data-group',name);
+
+      const delBtn=document.createElement('button');
+      delBtn.className='btn btn-sm btn-outline-secondary fav-group-del';
+      delBtn.textContent='삭제';
+      delBtn.setAttribute('data-group',name);
+
+      groupDiv.appendChild(btn); groupDiv.appendChild(delBtn);
+      wrapper.appendChild(groupDiv);
+    });
+
+    wrapper.querySelectorAll('.fav-group-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const name=btn.getAttribute('data-group');
+        openFavoriteModal(name);
+      });
+    });
+    wrapper.querySelectorAll('.fav-group-del').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const name=btn.getAttribute('data-group');
+        if(favoriteGroups[name]){
+          delete favoriteGroups[name];
+          saveFavorites();
+          renderFavoriteButtons();
         }
+      });
+    });
+  }
 
-        favoriteGroups[newName] = kws;
-        saveFavorites();
-        renderFavoriteButtons();
+  function openFavoriteModal(groupName){
+    const keywords=favoriteGroups[groupName]||[];
+    document.getElementById('favEditOldName').value=groupName;
+    document.getElementById('favEditName').value=groupName;
+    document.getElementById('favEditKeywords').value=keywords.join(', ');
 
-        document.getElementById('favEditOldName').value = newName;
-        alert('저장되었습니다.');
+    document.getElementById('favEditPreviewTitle').textContent=`대태그: ${groupName}`;
+    document.getElementById('favEditPreviewKeywords').textContent=`소태그: ${keywords.join(', ')}`;
+
+    const modal=bootstrap.Modal.getOrCreateInstance(document.getElementById('favEditModal'));
+    modal.show();
+
+    const nameInput=document.getElementById('favEditName');
+    const kwInput=document.getElementById('favEditKeywords');
+    const refresh=()=>{
+      const n=nameInput.value.trim();
+      const kws=normalizeKeywords(kwInput.value).join(', ');
+      document.getElementById('favEditPreviewTitle').textContent=`대태그: ${n || '(비어있음)'}`;
+      document.getElementById('favEditPreviewKeywords').textContent=`소태그: ${kws || '(비어있음)'}`;
+    };
+    nameInput.oninput=refresh;
+    kwInput.oninput=refresh;
+  }
+
+  function applyFavoriteSearchByModalInputs(){
+    const name=document.getElementById('favEditName').value.trim();
+    const kws=normalizeKeywords(document.getElementById('favEditKeywords').value);
+    if(!name || kws.length===0){ alert('대태그/소태그를 확인해 주세요.'); return; }
+    const combined=kws.join(' ');
+    document.getElementById('searchInput').value=combined;
+    searchVideosByKeyword(combined);
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('favEditModal')).hide();
+  }
+
+  function saveFavoriteFromModalInputs(){
+    const oldName=document.getElementById('favEditOldName').value.trim();
+    const newName=document.getElementById('favEditName').value.trim();
+    const kws=normalizeKeywords(document.getElementById('favEditKeywords').value);
+
+    if(!newName || kws.length===0){
+      alert('대태그 이름과 소태그 키워드를 모두 입력해 주세요.');
+      return;
     }
 
-    function deleteFavoriteFromModal() {
-        const oldName = document.getElementById('favEditOldName').value.trim();
-        if (!oldName) return;
-        const ok = confirm(`"${oldName}" 즐겨찾기를 삭제할까요?`);
-        if (!ok) return;
-
-        delete favoriteGroups[oldName];
-        saveFavorites();
-        renderFavoriteButtons();
-
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('favEditModal')).hide();
+    if(oldName && oldName!==newName){
+      if(favoriteGroups[newName]){
+        const ok=confirm(`"${newName}" 그룹이 이미 있습니다. 덮어쓸까요?`);
+        if(!ok) return;
+      }
+      delete favoriteGroups[oldName];
     }
 
-    document.querySelectorAll('.category-button').forEach(button => {
-        button.addEventListener('click', function() {
-            document.querySelector('.category-button.active')?.classList.remove('active');
-            this.classList.add('active');
+    favoriteGroups[newName]=kws;
+    saveFavorites();
+    renderFavoriteButtons();
 
-            currentCategory = this.getAttribute('data-category');
-            const categoryId = CATEGORIES[currentCategory];
+    document.getElementById('favEditOldName').value=newName;
+    alert('저장되었습니다.');
+  }
 
-            document.getElementById('category-title').textContent = this.textContent.trim();
-            document.getElementById('searchInput').value = '';
-            currentSearchKeyword = '';
-            updateSocialLinks('');
+  function deleteFavoriteFromModal(){
+    const oldName=document.getElementById('favEditOldName').value.trim();
+    if(!oldName) return;
+    const ok=confirm(`"${oldName}" 즐겨찾기를 삭제할까요?`);
+    if(!ok) return;
 
-            if (currentCategory === 'Live') fetchLiveVideos();
-            else fetchPopularVideos(categoryId);
-        });
+    delete favoriteGroups[oldName];
+    saveFavorites();
+    renderFavoriteButtons();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('favEditModal')).hide();
+  }
+
+  // UI 이벤트
+  document.querySelectorAll('.category-button').forEach(btn=>{
+    btn.addEventListener('click',function(){
+      document.querySelector('.category-button.active')?.classList.remove('active');
+      this.classList.add('active');
+
+      currentCategory=this.getAttribute('data-category');
+      document.getElementById('category-title').textContent=this.textContent.trim();
+
+      document.getElementById('searchInput').value='';
+      currentSearchKeyword='';
+      updateSocialLinks('');
+
+      const categoryId=CATEGORIES[currentCategory];
+      if(currentCategory==='Live') fetchLiveVideos();
+      else fetchPopularVideos(categoryId);
     });
+  });
 
-    ['langKR', 'langEN', 'langJP'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.addEventListener('change', (e) => {
-            const target = e.target;
-            if (!target.checked) { target.checked = true; return; }
-
-            ['langKR', 'langEN', 'langJP'].forEach(otherId => {
-                if (otherId !== id) {
-                    const otherEl = document.getElementById(otherId);
-                    if (otherEl) otherEl.checked = false;
-                }
-            });
-
-            const categoryId = CATEGORIES[currentCategory];
-            const keyword = document.getElementById('searchInput').value.trim();
-
-            if (keyword) searchVideosByKeyword(keyword);
-            else {
-                if (currentCategory === 'Live') fetchLiveVideos();
-                else fetchPopularVideos(categoryId);
-            }
-        });
+  ['langKR','langEN','langJP'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.addEventListener('change',(e)=>{
+      if(!e.target.checked){ e.target.checked=true; return; }
+      ['langKR','langEN','langJP'].forEach(other=>{
+        if(other!==id) document.getElementById(other).checked=false;
+      });
+      const keyword=document.getElementById('searchInput').value.trim();
+      const categoryId=CATEGORIES[currentCategory];
+      if(keyword) searchVideosByKeyword(keyword);
+      else{
+        if(currentCategory==='Live') fetchLiveVideos();
+        else fetchPopularVideos(categoryId);
+      }
     });
+  });
 
-    document.querySelectorAll('.duration-button').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelector('.duration-button.active')?.classList.remove('active');
-            this.classList.add('active');
-            currentDurationFilter = this.getAttribute('data-duration');
-            updateVideoListAndStatus();
-        });
+  document.querySelectorAll('.duration-button').forEach(btn=>{
+    btn.addEventListener('click',function(){
+      document.querySelector('.duration-button.active')?.classList.remove('active');
+      this.classList.add('active');
+      currentDurationFilter=this.getAttribute('data-duration');
+      updateVideoListAndStatus();
     });
+  });
 
-    document.querySelectorAll('.sort-button').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelector('.sort-button.active')?.classList.remove('active');
-            this.classList.add('active');
-            currentSortMode = this.getAttribute('data-sort');
-            updateVideoListAndStatus();
-        });
+  document.querySelectorAll('.sort-button').forEach(btn=>{
+    btn.addEventListener('click',function(){
+      document.querySelector('.sort-button.active')?.classList.remove('active');
+      this.classList.add('active');
+      currentSortMode=this.getAttribute('data-sort');
+      updateVideoListAndStatus();
     });
+  });
 
-    document.querySelectorAll('.time-range-button').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelector('.time-range-button.active')?.classList.remove('active');
-            this.classList.add('active');
-            currentTimeRange = this.getAttribute('data-range');
+  document.querySelectorAll('.time-range-button').forEach(btn=>{
+    btn.addEventListener('click',function(){
+      document.querySelector('.time-range-button.active')?.classList.remove('active');
+      this.classList.add('active');
+      currentTimeRange=this.getAttribute('data-range');
 
-            const categoryId = CATEGORIES[currentCategory];
-            const keyword = document.getElementById('searchInput').value.trim();
-
-            if (keyword) searchVideosByKeyword(keyword);
-            else {
-                if (currentCategory === 'Live') fetchLiveVideos();
-                else fetchPopularVideos(categoryId);
-            }
-        });
+      const keyword=document.getElementById('searchInput').value.trim();
+      const categoryId=CATEGORIES[currentCategory];
+      if(keyword) searchVideosByKeyword(keyword);
+      else{
+        if(currentCategory==='Live') fetchLiveVideos();
+        else fetchPopularVideos(categoryId);
+      }
     });
+  });
 
-    document.querySelectorAll('.subscriber-filter-checkbox').forEach(cb => {
-        cb.addEventListener('change', function () {
-            const range = this.getAttribute('data-range');
-
-            if (range === 'all') {
-                if (this.checked) {
-                    currentSubscriberRanges = new Set(['all']);
-                    document.querySelectorAll('.subscriber-filter-checkbox').forEach(other => {
-                        if (other !== this) other.checked = false;
-                    });
-                } else {
-                    this.checked = true;
-                    currentSubscriberRanges = new Set(['all']);
-                }
-            } else {
-                if (this.checked) {
-                    currentSubscriberRanges.delete('all');
-                    const allCb = document.getElementById('subFilterAll');
-                    if (allCb) allCb.checked = false;
-                    currentSubscriberRanges.add(range);
-                } else {
-                    currentSubscriberRanges.delete(range);
-                    if (currentSubscriberRanges.size === 0) {
-                        currentSubscriberRanges.add('all');
-                        const allCb = document.getElementById('subFilterAll');
-                        if (allCb) allCb.checked = true;
-                    }
-                }
-            }
-
-            updateVideoListAndStatus();
-        });
-    });
-
-    document.getElementById('searchBtn').addEventListener('click', () => {
-        const keyword = document.getElementById('searchInput').value.trim();
-        const categoryId = CATEGORIES[currentCategory];
-
-        if (!keyword) {
-            currentSearchKeyword = '';
-            updateSocialLinks('');
-            if (currentCategory === 'Live') fetchLiveVideos();
-            else fetchPopularVideos(categoryId);
-        } else {
-            searchVideosByKeyword(keyword);
+  document.querySelectorAll('.subscriber-filter-checkbox').forEach(cb=>{
+    cb.addEventListener('change',function(){
+      const range=this.getAttribute('data-range');
+      if(range==='all'){
+        if(this.checked){
+          currentSubscriberRanges=new Set(['all']);
+          document.querySelectorAll('.subscriber-filter-checkbox').forEach(o=>{ if(o!==this) o.checked=false; });
+        }else{
+          this.checked=true;
+          currentSubscriberRanges=new Set(['all']);
         }
-    });
-    document.getElementById('searchInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') document.getElementById('searchBtn').click();
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
-        // ✅ 자돈 클릭 새로고침
-        const brand = document.getElementById('brandReload');
-        if (brand) brand.addEventListener('click', () => window.location.reload());
-
-        // ✅ 모달 버튼 이벤트
-        document.getElementById('favEditSearchBtn').addEventListener('click', applyFavoriteSearchByModalInputs);
-        document.getElementById('favEditSaveBtn').addEventListener('click', saveFavoriteFromModalInputs);
-        document.getElementById('favEditDeleteBtn').addEventListener('click', deleteFavoriteFromModal);
-
-        loadApiKey();
-        loadFavorites();
-
-        document.getElementById('saveApiKeyBtn').addEventListener('click', saveApiKey);
-        document.getElementById('clearApiKeyBtn').addEventListener('click', clearApiKey);
-
-        updateTrendRegionInfo();
-        fetchPopularVideos(CATEGORIES[currentCategory]);
-
-        const addFavBtn = document.getElementById('addFavBtn');
-        if (addFavBtn) {
-            addFavBtn.addEventListener('click', () => {
-                const nameInput = document.getElementById('favGroupName');
-                const kwInput = document.getElementById('favKeywords');
-                if (!nameInput || !kwInput) return;
-
-                const name = nameInput.value.trim();
-                const kwStr = kwInput.value.trim();
-
-                if (!name || !kwStr) {
-                    alert('대태그 이름과 소태그 키워드를 모두 입력해 주세요.');
-                    return;
-                }
-
-                const keywords = normalizeKeywords(kwStr);
-                if (!keywords.length) {
-                    alert('소태그 키워드를 하나 이상 입력해 주세요.');
-                    return;
-                }
-
-                favoriteGroups[name] = keywords;
-                saveFavorites();
-                renderFavoriteButtons();
-                alert(`"${name}" 즐겨찾기가 저장되었습니다.`);
-            });
+      }else{
+        if(this.checked){
+          currentSubscriberRanges.delete('all');
+          document.getElementById('subFilterAll').checked=false;
+          currentSubscriberRanges.add(range);
+        }else{
+          currentSubscriberRanges.delete(range);
+          if(currentSubscriberRanges.size===0){
+            currentSubscriberRanges.add('all');
+            document.getElementById('subFilterAll').checked=true;
+          }
         }
-
-        setInterval(() => {
-            const categoryId = CATEGORIES[currentCategory];
-            if (currentCategory === 'Live') {
-                fetchLiveVideos();
-            } else if (currentSearchKeyword) {
-                searchVideosByKeyword(currentSearchKeyword);
-            } else {
-                fetchPopularVideos(categoryId);
-            }
-        }, 30 * 60 * 1000);
+      }
+      updateVideoListAndStatus();
     });
+  });
+
+  document.getElementById('searchBtn').addEventListener('click',()=>{
+    const keyword=document.getElementById('searchInput').value.trim();
+    const categoryId=CATEGORIES[currentCategory];
+    if(!keyword){
+      currentSearchKeyword='';
+      updateSocialLinks('');
+      if(currentCategory==='Live') fetchLiveVideos();
+      else fetchPopularVideos(categoryId);
+    }else{
+      searchVideosByKeyword(keyword);
+    }
+  });
+  document.getElementById('searchInput').addEventListener('keydown',(e)=>{
+    if(e.key==='Enter') document.getElementById('searchBtn').click();
+  });
+
+  document.addEventListener('DOMContentLoaded',()=>{
+    // ✅ 자돈 클릭 → 새로고침
+    document.getElementById('brandReload').addEventListener('click',()=>window.location.reload());
+
+    // 모달 버튼
+    document.getElementById('favEditSearchBtn').addEventListener('click',applyFavoriteSearchByModalInputs);
+    document.getElementById('favEditSaveBtn').addEventListener('click',saveFavoriteFromModalInputs);
+    document.getElementById('favEditDeleteBtn').addEventListener('click',deleteFavoriteFromModal);
+
+    loadApiKey();
+    loadFavorites();
+
+    document.getElementById('saveApiKeyBtn').addEventListener('click',saveApiKey);
+    document.getElementById('clearApiKeyBtn').addEventListener('click',clearApiKey);
+
+    updateTrendRegionInfo();
+    fetchPopularVideos(CATEGORIES[currentCategory]);
+
+    document.getElementById('addFavBtn').addEventListener('click',()=>{
+      const name=document.getElementById('favGroupName').value.trim();
+      const kwStr=document.getElementById('favKeywords').value.trim();
+      if(!name || !kwStr){ alert('대태그 이름과 소태그 키워드를 모두 입력해 주세요.'); return; }
+      const keywords=normalizeKeywords(kwStr);
+      if(!keywords.length){ alert('소태그 키워드를 하나 이상 입력해 주세요.'); return; }
+      favoriteGroups[name]=keywords;
+      saveFavorites();
+      renderFavoriteButtons();
+      alert(`"${name}" 즐겨찾기가 저장되었습니다.`);
+    });
+
+    // 30분마다 자동 리프레시
+    setInterval(()=>{
+      const categoryId=CATEGORIES[currentCategory];
+      if(currentCategory==='Live') fetchLiveVideos();
+      else if(currentSearchKeyword) searchVideosByKeyword(currentSearchKeyword);
+      else fetchPopularVideos(categoryId);
+    }, 30*60*1000);
+  });
 </script>
 </body>
 </html>
