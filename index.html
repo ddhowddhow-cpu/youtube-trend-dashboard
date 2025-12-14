@@ -131,6 +131,20 @@
             margin-bottom: 4px;
         }
         .social-link-row small { font-size: 0.75rem; }
+
+        /* ✅ 구독자 대비 조회수 배수 뱃지 */
+        .badge-multi {
+            display: inline-block;
+            font-size: 0.78rem;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 999px;
+            margin-bottom: 6px;
+        }
+        .multi-20  { background-color: #e9ecef; color: #212529; }
+        .multi-50  { background-color: #20c997; color: #fff; }
+        .multi-100 { background-color: #fd7e14; color: #fff; }
+        .multi-200 { background-color: #dc3545; color: #fff; }
     </style>
 </head>
 <body>
@@ -227,6 +241,8 @@
             <button class="btn btn-outline-secondary sort-button" data-sort="viewsAsc">조회수 낮은 순</button>
             <button class="btn btn-outline-secondary sort-button" data-sort="viewsPerHourDesc">조회 속도 순</button>
             <button class="btn btn-outline-secondary sort-button" data-sort="likeRateDesc">좋아요율 순</button>
+            <!-- ✅ 추가 -->
+            <button class="btn btn-outline-danger sort-button" data-sort="viewsPerSubDesc">구독자 대비 조회수</button>
         </div>
 
         <!-- 기간 필터 -->
@@ -437,8 +453,6 @@
 
     /* -----------------------------
        🔑 API 키 저장/로드/해제 (브라우저에 영구 저장: localStorage)
-       - 한 번 저장하면 같은 브라우저에서 해제 전까지 계속 사용
-       - localStorage 막힌 환경(사파리 프라이빗 등)에서도 "이번 로딩 동안"은 사용 가능하게 fallback
     ----------------------------- */
     const API_KEY_STORAGE_KEY = 'ytTrendApiKey';
     let _storageMode = 'localStorage'; // 'localStorage' | 'memory'
@@ -446,7 +460,6 @@
 
     function getStorage() {
         try {
-            // localStorage 사용 가능 체크
             const t = '__yttrend_test__';
             window.localStorage.setItem(t, '1');
             window.localStorage.removeItem(t);
@@ -568,7 +581,6 @@
         return data.items || [];
     }
 
-    // Music 카테고리 최적화: search API로 최근 영상 필터링 지원
     async function fetchMusicVideos(regionCode, categoryId, timeConfig) {
         const { after, before } = timeConfig;
         let searchUrl = `${BASE_URL}search?part=snippet&type=video&maxResults=50&order=viewCount&regionCode=${regionCode}&videoCategoryId=${categoryId}&key=${API_KEY}`;
@@ -648,7 +660,6 @@
                 return;
             }
 
-            // 중복 제거
             const uniqueMap = new Map();
             allItems.forEach(v => {
                 const vid = v.id;
@@ -792,7 +803,6 @@
         }
     }
 
-    // 🔗 소셜 링크
     function updateSocialLinks(keyword) {
         const row = document.getElementById('social-link-row');
         const yt = document.getElementById('ytLink');
@@ -858,7 +868,7 @@
 
             let items = searchData.items || [];
             if (items.length === 0 && timeQuery) {
-                searchUrl = searchBase; // 기간조건 없이 재검색
+                searchUrl = searchBase;
                 response = await fetch(searchUrl);
                 searchData = await response.json();
                 if (searchData.error) throw { ytError: searchData.error };
@@ -968,7 +978,6 @@
     function getFilteredVideos() {
         let list = currentBaseVideos.slice();
 
-        // 길이 필터 (Live 제외)
         if (currentDurationFilter !== 'all' && currentCategory !== 'Live') {
             list = list.filter(v => {
                 const seconds = parseDurationSeconds(v.contentDetails?.duration || '');
@@ -979,7 +988,6 @@
             });
         }
 
-        // 구독자 필터
         if (!(currentSubscriberRanges.size === 1 && currentSubscriberRanges.has('all'))) {
             list = list.filter(v => {
                 const subs = currentChannelStatsMap[v.snippet.channelId] || 0;
@@ -990,7 +998,6 @@
             });
         }
 
-        // 정렬
         list.sort((a, b) => {
             const va = parseInt(a.statistics?.viewCount || '0', 10);
             const vb = parseInt(b.statistics?.viewCount || '0', 10);
@@ -1009,10 +1016,17 @@
             const speedA = va / ha;
             const speedB = vb / hb;
 
+            // ✅ 구독자 대비 조회수 (조회수/구독자수)
+            const subsA = Math.max((currentChannelStatsMap[a.snippet.channelId] || 0), 1);
+            const subsB = Math.max((currentChannelStatsMap[b.snippet.channelId] || 0), 1);
+            const vpsA = va / subsA;
+            const vpsB = vb / subsB;
+
             switch (currentSortMode) {
                 case 'viewsAsc': return va - vb;
                 case 'likeRateDesc': return likeRateB - likeRateA;
                 case 'viewsPerHourDesc': return speedB - speedA;
+                case 'viewsPerSubDesc': return vpsB - vpsA; // ✅ 추가
                 case 'viewsDesc':
                 default: return vb - va;
             }
@@ -1069,6 +1083,23 @@
         const durationSeconds = parseDurationSeconds(video.contentDetails?.duration || '');
         const durationLabel = formatDurationLabel(durationSeconds);
 
+        // ✅ 구독자 대비 조회수 배수 뱃지 (소수점 X)
+        let multiBadgeHtml = '';
+        if (subscriberCount > 0 && viewCount > 0) {
+            const multi = Math.floor(viewCount / subscriberCount); // 정수 배수
+
+            let tag = '';
+            let cls = '';
+
+            if (multi >= 200) { tag = '초떡상'; cls = 'multi-200'; }
+            else if (multi >= 100) { tag = '떡상영상'; cls = 'multi-100'; }
+            else if (multi >= 50) { tag = '상승각'; cls = 'multi-50'; }
+            else if (multi >= 20) { tag = '관심'; cls = 'multi-20'; }
+
+            // 20배 미만은 숨김 (원하면 여기서 표시하게 바꿀 수 있음)
+            if (tag) multiBadgeHtml = `<span class="badge-multi ${cls}">x${multi} (${tag})</span>`;
+        }
+
         return `
         <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
             <div class="video-card">
@@ -1090,6 +1121,9 @@
                     }
                 </a>
                 <div class="card-body">
+                    <!-- ✅ 맨 위에 배수 뱃지 -->
+                    ${multiBadgeHtml ? `<div>${multiBadgeHtml}</div>` : ''}
+
                     <h5 class="card-title">${title}</h5>
                     <p class="card-text text-muted mb-1">${channelTitle}</p>
                     <p class="card-text"><span class="badge badge-time">${timeAgoText}</span></p>
@@ -1214,7 +1248,6 @@
         updateTrendKeywords(buildTrendKeywordsFromVideos(currentBaseVideos));
     }
 
-    // 즐겨찾기
     function loadFavorites() {
         try {
             const raw = window.localStorage.getItem('ytTrendFavorites');
@@ -1287,7 +1320,6 @@
         });
     }
 
-    // 카테고리 버튼
     document.querySelectorAll('.category-button').forEach(button => {
         button.addEventListener('click', function() {
             document.querySelector('.category-button.active')?.classList.remove('active');
@@ -1306,7 +1338,6 @@
         });
     });
 
-    // 언어 스위치
     ['langKR', 'langEN', 'langJP'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
@@ -1332,7 +1363,6 @@
         });
     });
 
-    // 길이 필터
     document.querySelectorAll('.duration-button').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelector('.duration-button.active')?.classList.remove('active');
@@ -1342,7 +1372,6 @@
         });
     });
 
-    // 정렬 필터
     document.querySelectorAll('.sort-button').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelector('.sort-button.active')?.classList.remove('active');
@@ -1352,7 +1381,6 @@
         });
     });
 
-    // 기간 필터
     document.querySelectorAll('.time-range-button').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelector('.time-range-button.active')?.classList.remove('active');
@@ -1370,7 +1398,6 @@
         });
     });
 
-    // 구독자 필터
     document.querySelectorAll('.subscriber-filter-checkbox').forEach(cb => {
         cb.addEventListener('change', function () {
             const range = this.getAttribute('data-range');
@@ -1405,7 +1432,6 @@
         });
     });
 
-    // 검색 버튼
     document.getElementById('searchBtn').addEventListener('click', () => {
         const keyword = document.getElementById('searchInput').value.trim();
         const categoryId = CATEGORIES[currentCategory];
@@ -1424,22 +1450,15 @@
     });
 
     document.addEventListener('DOMContentLoaded', () => {
-        // ✅ 먼저 저장된 API 키 로드
         loadApiKey();
-
-        // 즐겨찾기 로드
         loadFavorites();
 
-        // API 키 버튼 연결
         document.getElementById('saveApiKeyBtn').addEventListener('click', saveApiKey);
         document.getElementById('clearApiKeyBtn').addEventListener('click', clearApiKey);
 
         updateTrendRegionInfo();
-
-        // 초기 로딩
         fetchPopularVideos(CATEGORIES[currentCategory]);
 
-        // 즐겨찾기 추가/업데이트
         const addFavBtn = document.getElementById('addFavBtn');
         if (addFavBtn) {
             addFavBtn.addEventListener('click', () => {
@@ -1468,7 +1487,6 @@
             });
         }
 
-        // 30분마다 자동 새로고침
         setInterval(() => {
             const categoryId = CATEGORIES[currentCategory];
             if (currentCategory === 'Live') {
